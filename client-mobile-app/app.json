@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "client-mobile-app",
-    "slug": "client-mobile-app",
+    "name": "Practical Pesticide Log",
+    "slug": "practical-pesticide-log",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

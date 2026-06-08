@@ -29,8 +29,8 @@ interface MockPhoto {
 
 export const UI_TRANSLATIONS = {
   en: {
-    dashboardTitle: "🚜 Practical Farm Tools",
-    dashboardSubtitle: "Local Offline Mesh System",
+    dashboardTitle: "🚜 Practical Pesticide Log",
+    dashboardSubtitle: "by Practical Farm Tools | Offline Mesh",
     syncBtn: "Sync",
     syncing: "Syncing...",
     statusLabel: "Status: ",
@@ -96,8 +96,8 @@ export const UI_TRANSLATIONS = {
     pesticideSuccess: "Pesticide report logged successfully!"
   },
   es: {
-    dashboardTitle: "🚜 Herramientas de Granja",
-    dashboardSubtitle: "Sistema de Malla Local sin Conexión",
+    dashboardTitle: "🚜 Practical Pesticide Log",
+    dashboardSubtitle: "por Practical Farm Tools | Red de Malla",
     syncBtn: "Sincronizar",
     syncing: "Sincronizando...",
     statusLabel: "Estado: ",
@@ -162,8 +162,8 @@ export const UI_TRANSLATIONS = {
     pesticideSuccess: "¡Registro de pesticida guardado con éxito!"
   },
   pt: {
-    dashboardTitle: "🚜 Ferramentas Agrícolas",
-    dashboardSubtitle: "Sistema de Malha Local Offline",
+    dashboardTitle: "🚜 Practical Pesticide Log",
+    dashboardSubtitle: "por Practical Farm Tools | Rede de Malha",
     syncBtn: "Sincronizar",
     syncing: "Sincronizando...",
     statusLabel: "Status: ",
@@ -228,8 +228,8 @@ export const UI_TRANSLATIONS = {
     pesticideSuccess: "Registro de defensivo salvo com sucesso!"
   },
   fr: {
-    dashboardTitle: "🚜 Outils Agricoles",
-    dashboardSubtitle: "Système de Réseau Local Hors Ligne",
+    dashboardTitle: "🚜 Practical Pesticide Log",
+    dashboardSubtitle: "par Practical Farm Tools | Hors Ligne",
     syncBtn: "Synchro",
     syncing: "Synchro...",
     statusLabel: "Statut : ",
