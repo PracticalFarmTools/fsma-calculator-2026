@@ -1441,6 +1441,11 @@ export default function HomeScreen() {
                     onChangeText={(txt) => setDynamicValues(prev => ({ ...prev, [field.name]: txt }))}
                     keyboardType={field.type === 'number' ? 'numeric' : 'default'}
                   />
+                  {field.error_message && (
+                    <Text style={{ fontSize: 10, color: '#61746B', marginTop: 2, marginHorizontal: 4, fontStyle: 'italic' }}>
+                      💡 {field.error_message}
+                    </Text>
+                  )}
                 </View>
               );
             }
