@@ -45,7 +45,7 @@ const LEAFLET_HTML = `
     const streetLayer = L.tileLayer(streetUrl, { maxZoom: 19, attribution: 'OSM &copy; contributors' });
     
     // Default to Esri Satellite Imagery
-    const map = L.map('map', { layers: [satelliteLayer], zoomControl: false }).setView([42.360, -71.058], 15);
+    const map = L.map('map', { layers: [satelliteLayer], zoomControl: false }).setView([44.14095, -69.4425], 15);
     L.control.zoom({ position: 'topleft' }).addTo(map);
 
     let isSatellite = true;
@@ -221,9 +221,9 @@ export default function ExploreScreen() {
   const getRenderCoordinates = () => {
     if (vertices.length === 0) return [];
     
-    // Determine if vertices contain real GPS coordinates (different from mock Boston ones)
+    // Determine if vertices contain real GPS coordinates (different from mock Maine ones)
     const first = vertices[0];
-    const isRealGps = Math.abs(first.latitude - 42.36) > 0.5 || Math.abs(first.longitude - (-71.06)) > 0.5;
+    const isRealGps = Math.abs(first.latitude - 44.14095) > 0.5 || Math.abs(first.longitude - (-69.4425)) > 0.5;
 
     if (!isRealGps) {
       // Boston mock coordinates: keep coordinates exactly as mapped
@@ -315,10 +315,10 @@ export default function ExploreScreen() {
           return false;
         }
         
-        const centerLat = 42.360;
-        const centerLng = -71.058;
-        const radiusLat = 0.001;
-        const radiusLng = 0.0015;
+        const centerLat = 44.14095;
+        const centerLng = -69.4425;
+        const radiusLat = 0.0006;
+        const radiusLng = 0.0009;
 
         if (step >= 8) {
           clearInterval(interval);
@@ -330,8 +330,8 @@ export default function ExploreScreen() {
         const latitude = centerLat + Math.cos(angle) * radiusLat;
         const longitude = centerLng + Math.sin(angle) * radiusLng;
 
-        const x = ((longitude - (-71.062)) / 0.007) * canvasDimensions.width;
-        const y = ((42.362 - latitude) / 0.004) * canvasDimensions.height;
+        const x = ((longitude - (-69.4465)) / 0.007) * canvasDimensions.width;
+        const y = ((44.14295 - latitude) / 0.004) * canvasDimensions.height;
 
         setVertices(prev => [...prev, { x, y, latitude, longitude }]);
         step++;
@@ -375,8 +375,8 @@ export default function ExploreScreen() {
       }
 
       // Convert layout click pixels to mock GPS coordinates
-      const longitude = -71.062 + (locationX / canvasDimensions.width) * 0.007;
-      const latitude = 42.362 - (locationY / canvasDimensions.height) * 0.004;
+      const longitude = -69.4465 + (locationX / canvasDimensions.width) * 0.007;
+      const latitude = 44.14295 - (locationY / canvasDimensions.height) * 0.004;
 
       setVertices(prev => [...prev, { x: locationX, y: locationY, latitude, longitude }]);
     } else {
