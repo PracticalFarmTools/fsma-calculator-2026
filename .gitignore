@@ -1,0 +1,20 @@
+# Node/Expo dependencies
+node_modules/
+.expo/
+dist/
+web-build/
+npm-debug.log*
+
+# Python/FastAPI files
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+.pytest_cache/
+test_farm_sync.db
+farm_sync.db
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SyncOperation",
+  "type": "object",
+  "properties": {
+    "target_table": {
+      "type": "string",
+      "enum": ["messages", "tasks", "maintenance_logs", "chemical_reports"]
+    },
+    "record_id": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+    },
+    "operation": {
+      "type": "string",
+      "enum": ["INSERT", "UPDATE", "DELETE"]
+    },
+    "payload": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": ["target_table", "record_id", "operation", "payload", "updated_at"]
+}
