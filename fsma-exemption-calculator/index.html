@@ -149,9 +149,18 @@
             <div class="sales-input-container">
               <div class="sales-header-row">
                 <div class="sales-col-year">Year</div>
-                <div class="sales-col-field">Gross Produce Sales <span class="help-tooltip" title="Gross sales of fresh produce (fruits, vegetables, herbs, tree nuts, peanuts, mushrooms, sprouts). Exclude cut flowers, ornamentals, or processed/packaged foods.">ℹ️</span></div>
-                <div class="sales-col-field">Total Food Sales <span class="help-tooltip" title="Gross sales of human food & animal feed (produce, dairy, meat, feed grains, hay, honey, maple syrup, processed foods). Exclude wood, wool, or flowers.">ℹ️</span></div>
-                <div class="sales-col-field">Qualified End-User Sales <span class="help-tooltip" title="Gross food sales directly to consumers (CSA, markets, farm stand) or local restaurants/retailers in-state or within 275 miles. Exclude sales to distributors, packers, or cooperatives.">ℹ️</span></div>
+                <div class="sales-col-field">
+                  Gross Produce Sales
+                  <span class="col-subtext">Raw fruits, veggies, herbs, nuts, mushrooms. <strong>Exclude</strong> hay, meat, dairy, grains, processed foods.</span>
+                </div>
+                <div class="sales-col-field">
+                  Total Food Sales
+                  <span class="col-subtext">All human food + animal feed. <strong>Must include</strong> produce, meat, dairy, eggs, grains, hay. <strong>Exclude</strong> wood, wool.</span>
+                </div>
+                <div class="sales-col-field">
+                  Qualified End-User Sales
+                  <span class="col-subtext">Sales directly to consumers (CSA, stand, market) or local stores/restaurants in-state or &lt; 275 miles.</span>
+                </div>
               </div>
               
               <!-- Dynamic Rows inserted by JS based on selected year -->
@@ -162,7 +171,7 @@
                   
                   <div class="sales-input-group">
                     <label class="mobile-only-label" for="produce-sales-0">Gross Produce Sales</label>
-                    <p class="mobile-help-text">Gross sales of raw fruits, vegetables, herbs, tree nuts, mushrooms, sprouts. Exclude value-added items, flowers, or feed.</p>
+                    <p class="mobile-help-text">Raw fruits, veggies, herbs, nuts, mushrooms. <strong>Exclude</strong> hay, meat, dairy, grains, processed foods.</p>
                     <div class="input-wrapper-prefix">
                       <span class="currency-prefix">$</span>
                       <input type="number" class="sales-input produce-sales" id="produce-sales-0" min="0" placeholder="0">
@@ -171,7 +180,7 @@
 
                   <div class="sales-input-group">
                     <label class="mobile-only-label" for="food-sales-0">Total Food Sales</label>
-                    <p class="mobile-help-text">Gross sales of all food for human/animal consumption (dairy, meat, honey, feed grains, hay). Exclude wool, timber, or flowers.</p>
+                    <p class="mobile-help-text">All human food + animal feed. <strong>Must include</strong> produce, meat, dairy, eggs, grains, hay. <strong>Exclude</strong> wood, wool.</p>
                     <div class="input-wrapper-prefix">
                       <span class="currency-prefix">$</span>
                       <input type="number" class="sales-input total-food-sales" id="food-sales-0" min="0" placeholder="0">
@@ -180,7 +189,7 @@
 
                   <div class="sales-input-group">
                     <label class="mobile-only-label" for="local-sales-0">Qualified End-User Sales</label>
-                    <p class="mobile-help-text">Gross food sales directly to consumers (CSA, market) or local stores/restaurants in-state or within 275 miles. Exclude distributors.</p>
+                    <p class="mobile-help-text">Sales directly to consumers (CSA, stand, market) or local stores/restaurants in-state or within 275 miles.</p>
                     <div class="input-wrapper-prefix">
                       <span class="currency-prefix">$</span>
                       <input type="number" class="sales-input local-food-sales" id="local-sales-0" min="0" placeholder="0">
@@ -194,7 +203,7 @@
                   
                   <div class="sales-input-group">
                     <label class="mobile-only-label" for="produce-sales-1">Gross Produce Sales</label>
-                    <p class="mobile-help-text">Gross sales of raw fruits, vegetables, herbs, tree nuts, mushrooms, sprouts. Exclude value-added items, flowers, or feed.</p>
+                    <p class="mobile-help-text">Raw fruits, veggies, herbs, nuts, mushrooms. <strong>Exclude</strong> hay, meat, dairy, grains, processed foods.</p>
                     <div class="input-wrapper-prefix">
                       <span class="currency-prefix">$</span>
                       <input type="number" class="sales-input produce-sales" id="produce-sales-1" min="0" placeholder="0">
@@ -203,7 +212,7 @@
 
                   <div class="sales-input-group">
                     <label class="mobile-only-label" for="food-sales-1">Total Food Sales</label>
-                    <p class="mobile-help-text">Gross sales of all food for human/animal consumption (dairy, meat, honey, feed grains, hay). Exclude wool, timber, or flowers.</p>
+                    <p class="mobile-help-text">All human food + animal feed. <strong>Must include</strong> produce, meat, dairy, eggs, grains, hay. <strong>Exclude</strong> wood, wool.</p>
                     <div class="input-wrapper-prefix">
                       <span class="currency-prefix">$</span>
                       <input type="number" class="sales-input total-food-sales" id="food-sales-1" min="0" placeholder="0">
@@ -212,7 +221,7 @@
 
                   <div class="sales-input-group">
                     <label class="mobile-only-label" for="local-sales-1">Qualified End-User Sales</label>
-                    <p class="mobile-help-text">Gross food sales directly to consumers (CSA, market) or local stores/restaurants in-state or within 275 miles. Exclude distributors.</p>
+                    <p class="mobile-help-text">Sales directly to consumers (CSA, stand, market) or local stores/restaurants in-state or within 275 miles.</p>
                     <div class="input-wrapper-prefix">
                       <span class="currency-prefix">$</span>
                       <input type="number" class="sales-input local-food-sales" id="local-sales-1" min="0" placeholder="0">
@@ -226,7 +235,7 @@
                   
                   <div class="sales-input-group">
                     <label class="mobile-only-label" for="produce-sales-2">Gross Produce Sales</label>
-                    <p class="mobile-help-text">Gross sales of raw fruits, vegetables, herbs, tree nuts, mushrooms, sprouts. Exclude value-added items, flowers, or feed.</p>
+                    <p class="mobile-help-text">Raw fruits, veggies, herbs, nuts, mushrooms. <strong>Exclude</strong> hay, meat, dairy, grains, processed foods.</p>
                     <div class="input-wrapper-prefix">
                       <span class="currency-prefix">$</span>
                       <input type="number" class="sales-input produce-sales" id="produce-sales-2" min="0" placeholder="0">
@@ -235,7 +244,7 @@
 
                   <div class="sales-input-group">
                     <label class="mobile-only-label" for="food-sales-2">Total Food Sales</label>
-                    <p class="mobile-help-text">Gross sales of all food for human/animal consumption (dairy, meat, honey, feed grains, hay). Exclude wool, timber, or flowers.</p>
+                    <p class="mobile-help-text">All human food + animal feed. <strong>Must include</strong> produce, meat, dairy, eggs, grains, hay. <strong>Exclude</strong> wood, wool.</p>
                     <div class="input-wrapper-prefix">
                       <span class="currency-prefix">$</span>
                       <input type="number" class="sales-input total-food-sales" id="food-sales-2" min="0" placeholder="0">
@@ -244,13 +253,14 @@
 
                   <div class="sales-input-group">
                     <label class="mobile-only-label" for="local-sales-2">Qualified End-User Sales</label>
-                    <p class="mobile-help-text">Gross food sales directly to consumers (CSA, market) or local stores/restaurants in-state or within 275 miles. Exclude distributors.</p>
+                    <p class="mobile-help-text">Sales directly to consumers (CSA, stand, market) or local stores/restaurants in-state or within 275 miles.</p>
                     <div class="input-wrapper-prefix">
                       <span class="currency-prefix">$</span>
                       <input type="number" class="sales-input local-sales-2" id="local-sales-2" min="0" placeholder="0">
                     </div>
                   </div>
                 </div>
+              </div>
             </div>
           </div>
 
