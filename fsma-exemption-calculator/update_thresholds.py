@@ -74,10 +74,6 @@ def check_and_copy_icons():
     dir_path = os.path.dirname(__file__)
     icon_192 = os.path.join(dir_path, "icon-192.png")
     icon_512 = os.path.join(dir_path, "icon-512.png")
-    
-    if os.path.exists(icon_192) and os.path.exists(icon_512):
-        print("PWA icons already exist.")
-        return
 
     # Look for source icon.png
     src_icon = os.path.abspath(os.path.join(dir_path, "..", "client-mobile-app", "assets", "images", "icon.png"))
