@@ -467,7 +467,7 @@ function calculateExemption() {
           <ol style="margin-left: 1.15rem; margin-top: 0.35rem; font-size: 0.78rem; display: flex; flex-direction: column; gap: 0.2rem; line-height: 1.4;">
             <li>Click <strong>Print / Save Exemption Record</strong> below to generate your record.</li>
             <li>Sign and date the printed annual written determination.</li>
-            <li>File it alongside your Schedule F tax returns or sales logs (retain for at least 3 years).</li>
+            <li>File it alongside your sales logs or farm records (retain for at least 3 years).</li>
             <li><strong>Labeling Rule (21 CFR § 112.6):</strong> Ensure your farm name and physical address are prominently shown at your farmstand, market placard, invoices, or produce labels.</li>
           </ol>
         `;

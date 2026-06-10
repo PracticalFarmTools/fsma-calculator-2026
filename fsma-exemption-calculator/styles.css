@@ -52,13 +52,13 @@ body {
 
 /* Header Styles */
 .app-header {
-  background-color: var(--bg-white);
-  border-bottom: 1px solid var(--border-color);
+  background-color: var(--primary-green);
+  border-bottom: 1px solid var(--primary-green-dark);
   padding: 1.25rem 2rem;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(27, 67, 34, 0.03);
+  box-shadow: 0 3px 10px rgba(15, 40, 20, 0.12);
 }
 
 .header-content {
@@ -77,21 +77,24 @@ body {
   gap: 0.85rem;
 }
 
-.logo-emoji {
-  font-size: 2.2rem;
+.logo-image {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 6px;
 }
 
 .logo-area h1 {
   font-family: var(--font-title);
   font-size: 1.45rem;
   font-weight: 800;
-  color: var(--primary-green);
+  color: var(--bg-white);
   letter-spacing: -0.02em;
 }
 
 .tagline {
   font-size: 0.8rem;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.8);
   font-weight: 500;
   margin-top: -0.1rem;
 }
