@@ -207,6 +207,9 @@ function loadSavedState() {
       // Ensure structure is correct
       if (parsed.sales && parsed.sales.produce) {
         state = parsed;
+        if (!state.projections) {
+          state.projections = { produce: "", food: "", local: "" };
+        }
         
         // Populate inputs
         els.farmName.value = state.farmName || "";
