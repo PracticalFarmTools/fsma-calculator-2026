@@ -36,6 +36,43 @@ def run_migrations():
     except Exception as e:
         logger.error(f"Failed to copy laws JSON: {e}")
 
+    # 3. Copy/generate PWA icons for the calculator if missing
+    try:
+        calc_dir = "c:/Users/kyles/Desktop/Antigravity Music/Practical Farm Tools/fsma-exemption-calculator"
+        if not os.path.exists(calc_dir):
+            calc_dir = "../fsma-exemption-calculator"
+        if not os.path.exists(calc_dir):
+            calc_dir = "./fsma-exemption-calculator"
+            
+        if os.path.exists(calc_dir):
+            icon_192 = os.path.join(calc_dir, "icon-192.png")
+            icon_512 = os.path.join(calc_dir, "icon-512.png")
+            
+            if not (os.path.exists(icon_192) and os.path.exists(icon_512)):
+                src_icon = "c:/Users/kyles/Desktop/Antigravity Music/Practical Farm Tools/client-mobile-app/assets/images/icon.png"
+                if not os.path.exists(src_icon):
+                    src_icon = "../client-mobile-app/assets/images/icon.png"
+                if not os.path.exists(src_icon):
+                    src_icon = "./client-mobile-app/assets/images/icon.png"
+                    
+                if os.path.exists(src_icon):
+                    logger.info(f"Database Migration: Copying PWA icons from {src_icon} to {calc_dir}")
+                    try:
+                        from PIL import Image
+                        img = Image.open(src_icon)
+                        img.resize((192, 192), Image.Resampling.LANCZOS).save(icon_192, "PNG")
+                        img.resize((512, 512), Image.Resampling.LANCZOS).save(icon_512, "PNG")
+                        logger.info("Database Migration: Successfully generated resized PWA icons using PIL.")
+                    except Exception as pil_err:
+                        logger.warning(f"PIL resize failed ({pil_err}), performing direct copy fallback.")
+                        shutil.copy(src_icon, icon_192)
+                        shutil.copy(src_icon, icon_512)
+                        logger.info("Database Migration: Successfully copied fallback PWA icons.")
+                else:
+                    logger.warning(f"PWA source icon not found at {src_icon}.")
+    except Exception as e:
+        logger.error(f"Failed to copy PWA icons during migration: {e}")
+
     # 2. Add columns to chemical_reports table if missing
     try:
         with engine.begin() as conn:
@@ -85,6 +122,57 @@ app = FastAPI(
     description="Offline-first background synchronization server",
     version="1.0.0"
 )
+
+# Start FDA Threshold Scraper in background on startup
+import subprocess
+import threading
+
+def run_threshold_updater_in_background():
+    try:
+        # Determine script location dynamically
+        script_path = "fsma-exemption-calculator/update_thresholds.py"
+        if not os.path.exists(script_path):
+            script_path = "../fsma-exemption-calculator/update_thresholds.py"
+        if not os.path.exists(script_path):
+            script_path = "./update_thresholds.py"
+            
+        logger.info("Background Scraper: Checking for updated FDA FSMA thresholds...")
+        res = subprocess.run(["python", script_path], capture_output=True, text=True)
+        if res.returncode == 0:
+            logger.info(f"Background Scraper Success: {res.stdout.strip()}")
+        else:
+            logger.error(f"Background Scraper Failed: {res.stderr.strip()}")
+    except Exception as e:
+        logger.error(f"Failed to run threshold updater background task: {e}")
+
+@app.on_event("startup")
+def startup_event():
+    thread = threading.Thread(target=run_threshold_updater_in_background)
+    thread.daemon = True
+    thread.start()
+
+@app.post("/api/update-thresholds")
+def trigger_update_thresholds():
+    try:
+        script_path = "fsma-exemption-calculator/update_thresholds.py"
+        if not os.path.exists(script_path):
+            script_path = "../fsma-exemption-calculator/update_thresholds.py"
+        if not os.path.exists(script_path):
+            script_path = "./update_thresholds.py"
+            
+        res = subprocess.run(["python", script_path], capture_output=True, text=True)
+        if res.returncode == 0:
+            return {"status": "success", "output": res.stdout.strip()}
+            
+        # Try loading json to verify
+        json_path = os.path.join(os.path.dirname(script_path), "thresholds.json")
+        last_updated = "Unknown"
+        if os.path.exists(json_path):
+            with open(json_path, 'r') as f:
+                last_updated = json.load(f).get("last_updated", "Unknown")
+        return {"status": "partial_success", "last_updated": last_updated, "error": res.stderr.strip()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Enable CORS for local cross-origin connections
 app.add_middleware(

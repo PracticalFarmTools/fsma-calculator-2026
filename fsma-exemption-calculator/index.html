@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FSMA Exemption Calculator | Practical Farm Tools</title>
+  <meta name="description" content="An easy, offline-first calculator for farmers to determine and prove their FDA FSMA Produce Safety Rule exemption status.">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1b4322">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  
+  <!-- Premium Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- App Wrapper (hides during printing) -->
+  <div id="app-container" class="no-print">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-content">
+        <div class="logo-area">
+          <span class="logo-emoji">🌾</span>
+          <div>
+            <h1>Practical Farm Tools</h1>
+            <p class="tagline">FSMA Exemption Calculator & Records Builder</p>
+          </div>
+        </div>
+        <div class="status-indicator">
+          <span id="offline-badge" class="badge offline-badge">📡 Offline Ready</span>
+          <span id="sync-status-badge" class="badge sync-badge">Thresholds Current</span>
+          <span id="save-status-badge" class="badge save-badge">💾 Saved Locally</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="app-main">
+      <div class="grid-container">
+        
+        <!-- Left Side: Form Cards -->
+        <section class="form-section">
+          
+          <!-- Card 1: Farm Information -->
+          <div class="card">
+            <div class="card-header">
+              <span class="step-num">1</span>
+              <h2>Farm Information</h2>
+            </div>
+            <p class="card-intro">Enter your farm's details. This information is saved automatically on your device and will appear on your official exemption record printed for the inspector.</p>
+            <div class="form-grid">
+              <div class="form-group col-span-2">
+                <label for="farm-name">Farm Legal Name</label>
+                <input type="text" id="farm-name" placeholder="e.g., Green Meadows Farm LLC">
+              </div>
+              <div class="form-group col-span-2">
+                <label for="farm-address">Farm Physical Address</label>
+                <input type="text" id="farm-address" placeholder="e.g., 24 Eugley Hill Road, Nobleboro, ME 04555">
+              </div>
+              <div class="form-group">
+                <label for="contact-name">Owner/Operator Name</label>
+                <input type="text" id="contact-name" placeholder="e.g., Kyle Smith">
+              </div>
+              <div class="form-group">
+                <label for="contact-phone">Phone Number</label>
+                <input type="tel" id="contact-phone" placeholder="e.g., 207-555-0199">
+              </div>
+              <div class="form-group">
+                <label for="farm-state">Farm State</label>
+                <select id="farm-state">
+                  <option value="AL">Alabama (AL)</option>
+                  <option value="AK">Alaska (AK)</option>
+                  <option value="AZ">Arizona (AZ)</option>
+                  <option value="AR">Arkansas (AR)</option>
+                  <option value="CA">California (CA)</option>
+                  <option value="CO">Colorado (CO)</option>
+                  <option value="CT">Connecticut (CT)</option>
+                  <option value="DE">Delaware (DE)</option>
+                  <option value="FL">Florida (FL)</option>
+                  <option value="GA">Georgia (GA)</option>
+                  <option value="HI">Hawaii (HI)</option>
+                  <option value="ID">Idaho (ID)</option>
+                  <option value="IL">Illinois (IL)</option>
+                  <option value="IN">Indiana (IN)</option>
+                  <option value="IA">Iowa (IA)</option>
+                  <option value="KS">Kansas (KS)</option>
+                  <option value="KY">Kentucky (KY)</option>
+                  <option value="LA">Louisiana (LA)</option>
+                  <option value="ME" selected>Maine (ME)</option>
+                  <option value="MD">Maryland (MD)</option>
+                  <option value="MA">Massachusetts (MA)</option>
+                  <option value="MI">Michigan (MI)</option>
+                  <option value="MN">Minnesota (MN)</option>
+                  <option value="MS">Mississippi (MS)</option>
+                  <option value="MO">Missouri (MO)</option>
+                  <option value="MT">Montana (MT)</option>
+                  <option value="NE">Nebraska (NE)</option>
+                  <option value="NV">Nevada (NV)</option>
+                  <option value="NH">New Hampshire (NH)</option>
+                  <option value="NJ">New Jersey (NJ)</option>
+                  <option value="NM">New Mexico (NM)</option>
+                  <option value="NY">New York (NY)</option>
+                  <option value="NC">North Carolina (NC)</option>
+                  <option value="ND">North Dakota (ND)</option>
+                  <option value="OH">Ohio (OH)</option>
+                  <option value="OK">Oklahoma (OK)</option>
+                  <option value="OR">Oregon (OR)</option>
+                  <option value="PA">Pennsylvania (PA)</option>
+                  <option value="RI">Rhode Island (RI)</option>
+                  <option value="SC">South Carolina (SC)</option>
+                  <option value="SD">South Dakota (SD)</option>
+                  <option value="TN">Tennessee (TN)</option>
+                  <option value="TX">Texas (TX)</option>
+                  <option value="UT">Utah (UT)</option>
+                  <option value="VT">Vermont (VT)</option>
+                  <option value="VA">Virginia (VA)</option>
+                  <option value="WA">Washington (WA)</option>
+                  <option value="WV">West Virginia (WV)</option>
+                  <option value="WI">Wisconsin (WI)</option>
+                  <option value="WY">Wyoming (WY)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="contact-email">Email Address</label>
+                <input type="email" id="contact-email" placeholder="e.g., kyle@greenmeadowsfarm.com">
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: Assessment Year & Sales Figures -->
+          <div class="card">
+            <div class="card-header">
+              <span class="step-num">2</span>
+              <h2>Sales Records & Averages</h2>
+            </div>
+            <p class="card-intro">Select the year you want to claim your exemption for (default 2026). Then enter your gross sales for the preceding three years. All sales figures are saved automatically as you type.</p>
+            
+            <div class="form-group year-select-group">
+              <label for="assessment-year">Claiming Exemption for Year:</label>
+              <select id="assessment-year">
+                <option value="2026" selected>2026 (Uses 2023 - 2025 records)</option>
+                <option value="2025">2025 (Uses 2022 - 2024 records)</option>
+              </select>
+            </div>
+
+            <!-- Table-like Card for entering 3-year records -->
+            <div class="sales-input-container">
+              <div class="sales-header-row">
+                <div class="sales-col-year">Year</div>
+                <div class="sales-col-field">Gross Produce Sales <span class="help-tooltip" title="Gross sales of fresh produce (fruits, vegetables, herbs, tree nuts, peanuts, mushrooms, sprouts). Exclude cut flowers, ornamentals, or processed/packaged foods.">ℹ️</span></div>
+                <div class="sales-col-field">Total Food Sales <span class="help-tooltip" title="Gross sales of human food & animal feed (produce, dairy, meat, feed grains, hay, honey, maple syrup, processed foods). Exclude wood, wool, or flowers.">ℹ️</span></div>
+                <div class="sales-col-field">Qualified End-User Sales <span class="help-tooltip" title="Gross food sales directly to consumers (CSA, markets, farm stand) or local restaurants/retailers in-state or within 275 miles. Exclude sales to distributors, packers, or cooperatives.">ℹ️</span></div>
+              </div>
+              
+              <!-- Dynamic Rows inserted by JS based on selected year -->
+              <div id="sales-rows-container">
+                <!-- Year 1 Input Row -->
+                <div class="sales-input-row" data-index="0">
+                  <div class="row-year-label" id="row-year-0">2023</div>
+                  
+                  <div class="sales-input-group">
+                    <label class="mobile-only-label" for="produce-sales-0">Gross Produce Sales</label>
+                    <p class="mobile-help-text">Gross sales of raw fruits, vegetables, herbs, tree nuts, mushrooms, sprouts. Exclude value-added items, flowers, or feed.</p>
+                    <div class="input-wrapper-prefix">
+                      <span class="currency-prefix">$</span>
+                      <input type="number" class="sales-input produce-sales" id="produce-sales-0" min="0" placeholder="0">
+                    </div>
+                  </div>
+
+                  <div class="sales-input-group">
+                    <label class="mobile-only-label" for="food-sales-0">Total Food Sales</label>
+                    <p class="mobile-help-text">Gross sales of all food for human/animal consumption (dairy, meat, honey, feed grains, hay). Exclude wool, timber, or flowers.</p>
+                    <div class="input-wrapper-prefix">
+                      <span class="currency-prefix">$</span>
+                      <input type="number" class="sales-input total-food-sales" id="food-sales-0" min="0" placeholder="0">
+                    </div>
+                  </div>
+
+                  <div class="sales-input-group">
+                    <label class="mobile-only-label" for="local-sales-0">Qualified End-User Sales</label>
+                    <p class="mobile-help-text">Gross food sales directly to consumers (CSA, market) or local stores/restaurants in-state or within 275 miles. Exclude distributors.</p>
+                    <div class="input-wrapper-prefix">
+                      <span class="currency-prefix">$</span>
+                      <input type="number" class="sales-input local-food-sales" id="local-sales-0" min="0" placeholder="0">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Year 2 Input Row -->
+                <div class="sales-input-row" data-index="1">
+                  <div class="row-year-label" id="row-year-1">2024</div>
+                  
+                  <div class="sales-input-group">
+                    <label class="mobile-only-label" for="produce-sales-1">Gross Produce Sales</label>
+                    <p class="mobile-help-text">Gross sales of raw fruits, vegetables, herbs, tree nuts, mushrooms, sprouts. Exclude value-added items, flowers, or feed.</p>
+                    <div class="input-wrapper-prefix">
+                      <span class="currency-prefix">$</span>
+                      <input type="number" class="sales-input produce-sales" id="produce-sales-1" min="0" placeholder="0">
+                    </div>
+                  </div>
+
+                  <div class="sales-input-group">
+                    <label class="mobile-only-label" for="food-sales-1">Total Food Sales</label>
+                    <p class="mobile-help-text">Gross sales of all food for human/animal consumption (dairy, meat, honey, feed grains, hay). Exclude wool, timber, or flowers.</p>
+                    <div class="input-wrapper-prefix">
+                      <span class="currency-prefix">$</span>
+                      <input type="number" class="sales-input total-food-sales" id="food-sales-1" min="0" placeholder="0">
+                    </div>
+                  </div>
+
+                  <div class="sales-input-group">
+                    <label class="mobile-only-label" for="local-sales-1">Qualified End-User Sales</label>
+                    <p class="mobile-help-text">Gross food sales directly to consumers (CSA, market) or local stores/restaurants in-state or within 275 miles. Exclude distributors.</p>
+                    <div class="input-wrapper-prefix">
+                      <span class="currency-prefix">$</span>
+                      <input type="number" class="sales-input local-food-sales" id="local-sales-1" min="0" placeholder="0">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Year 3 Input Row -->
+                <div class="sales-input-row" data-index="2">
+                  <div class="row-year-label" id="row-year-2">2025</div>
+                  
+                  <div class="sales-input-group">
+                    <label class="mobile-only-label" for="produce-sales-2">Gross Produce Sales</label>
+                    <p class="mobile-help-text">Gross sales of raw fruits, vegetables, herbs, tree nuts, mushrooms, sprouts. Exclude value-added items, flowers, or feed.</p>
+                    <div class="input-wrapper-prefix">
+                      <span class="currency-prefix">$</span>
+                      <input type="number" class="sales-input produce-sales" id="produce-sales-2" min="0" placeholder="0">
+                    </div>
+                  </div>
+
+                  <div class="sales-input-group">
+                    <label class="mobile-only-label" for="food-sales-2">Total Food Sales</label>
+                    <p class="mobile-help-text">Gross sales of all food for human/animal consumption (dairy, meat, honey, feed grains, hay). Exclude wool, timber, or flowers.</p>
+                    <div class="input-wrapper-prefix">
+                      <span class="currency-prefix">$</span>
+                      <input type="number" class="sales-input total-food-sales" id="food-sales-2" min="0" placeholder="0">
+                    </div>
+                  </div>
+
+                  <div class="sales-input-group">
+                    <label class="mobile-only-label" for="local-sales-2">Qualified End-User Sales</label>
+                    <p class="mobile-help-text">Gross food sales directly to consumers (CSA, market) or local stores/restaurants in-state or within 275 miles. Exclude distributors.</p>
+                    <div class="input-wrapper-prefix">
+                      <span class="currency-prefix">$</span>
+                      <input type="number" class="sales-input local-sales-2" id="local-sales-2" min="0" placeholder="0">
+                    </div>
+                  </div>
+                </div>
+            </div>
+          </div>
+
+          <!-- Card: Future Year Exemption Planner -->
+          <div class="card collapsible-card no-print" id="projection-planning-card">
+            <button class="collapse-trigger" id="btn-toggle-projection" type="button" aria-expanded="false">
+              <span class="trigger-title">🔮 Future Year Exemption Planner (Optional)</span>
+              <span class="trigger-icon">▼</span>
+            </button>
+            <div class="collapse-content hidden" id="projection-content">
+              <p class="card-intro">Plan ahead for next year (<span id="proj-next-year-label">2027</span>). This tool pre-populates your records from Step 2 and lets you enter projected sales for the current year to predict your future exemption status.</p>
+              
+              <div class="projection-form">
+                <div class="projection-year-title" style="font-weight: 700; color: var(--primary-green-dark); margin-bottom: 0.75rem; font-size: 0.95rem;">
+                  Projected Current Year: <span id="proj-current-year-label">2026</span>
+                </div>
+                
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label for="proj-produce">Projected Gross Produce Sales</label>
+                    <div class="input-wrapper-prefix">
+                      <span class="currency-prefix">$</span>
+                      <input type="number" id="proj-produce" min="0" placeholder="0">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="proj-food">Projected Total Food Sales</label>
+                    <div class="input-wrapper-prefix">
+                      <span class="currency-prefix">$</span>
+                      <input type="number" id="proj-food" min="0" placeholder="0">
+                    </div>
+                  </div>
+                  <div class="form-group col-span-2">
+                    <label for="proj-local">Projected Qualified End-User Sales</label>
+                    <div class="input-wrapper-prefix">
+                      <span class="currency-prefix">$</span>
+                      <input type="number" id="proj-local" min="0" placeholder="0">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="status-result-area" style="margin-top: 1.25rem; margin-bottom: 1.25rem; background-color: var(--bg-sage-light);">
+                  <p class="status-title-label">PROJECTED EXEMPTION STATUS</p>
+                  <div id="proj-status-badge" class="status-badge status-undetermined" style="font-size: 1.15rem; padding: 0.5rem 1rem;">Enter Projections</div>
+                  <p id="proj-status-explanation" class="status-desc" style="font-size: 0.8rem; line-height: 1.45;">Enter projected sales to calculate your estimated status for next year.</p>
+                </div>
+                
+                <p class="card-intro" style="font-size: 0.75rem; border-top: 1px dashed var(--border-color); padding-top: 0.75rem; margin-bottom: 0;">
+                  💡 <strong>Exemption Math:</strong> Next year's assessment will average your sales from <span id="proj-math-years">2024, 2025, and 2026</span>. Projections are compared against the latest 2026 thresholds as a baseline estimate. Next year's official limits will adjust slightly for inflation in April.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Side: Calculations & Results -->
+        <section class="results-section">
+          
+          <!-- Card 3: Exemption Status Card -->
+          <div class="card results-card" id="exemption-card">
+            <div class="card-header">
+              <span class="step-num">3</span>
+              <h2>Your Exemption Status</h2>
+            </div>
+            
+            <div id="validation-warning" class="validation-warning-box hidden">
+              ⚠️ <strong>Check numbers entered:</strong> <span id="warning-message"></span>
+            </div>
+
+            <div class="status-result-area">
+              <p class="status-title-label">CALCULATED STATUS</p>
+              <div id="status-badge" class="status-badge status-undetermined">Enter Sales Data</div>
+              <p id="status-explanation" class="status-desc">Fill in the sales numbers in Step 2 to calculate your FSMA Exemption status.</p>
+            </div>
+
+            <!-- Calculated Rolling Averages -->
+            <div class="math-breakdown">
+              <h3>3-Year Rolling Averages</h3>
+              <div class="math-row">
+                <span class="math-label">Produce Sales Avg:</span>
+                <span class="math-val" id="avg-produce-display">$0</span>
+              </div>
+              <div class="math-row-sub">
+                <span class="math-label-sub">FDA Micro-Farm Limit:</span>
+                <span class="math-val-sub" id="limit-produce-display">$34,324</span>
+              </div>
+              
+              <div class="math-row">
+                <span class="math-label">Total Food Sales Avg:</span>
+                <span class="math-val" id="avg-food-display">$0</span>
+              </div>
+              <div class="math-row-sub">
+                <span class="math-label-sub">FDA Qualified Limit:</span>
+                <span class="math-val-sub" id="limit-food-display">$686,476</span>
+              </div>
+
+              <div class="math-row">
+                <span class="math-label">Local Sales %:</span>
+                <span class="math-val" id="avg-local-percent-display">0%</span>
+              </div>
+              <div class="math-row-sub">
+                <span class="math-label-sub">Required Local %:</span>
+                <span class="math-val-sub">> 50%</span>
+              </div>
+            </div>
+
+            <!-- Exporter Actions -->
+            <div class="actions-area">
+              <p id="print-helper-hint" class="print-helper-text">
+                ⚠️ Please enter your sales data in Step 2 to calculate your status.
+              </p>
+              <button id="btn-print-preview" class="btn btn-secondary" disabled>👁️ Preview Exemption Letter</button>
+              <button id="btn-print" class="btn btn-primary" disabled>🖨️ Print / Save Exemption Record</button>
+            </div>
+          </div>
+
+          <!-- Card 4: Rules & Citations Reference -->
+          <div class="card helper-card">
+            <h3>Produce Safety Rule Exemption Criteria</h3>
+            <div class="helper-bullet">
+              <div class="bullet-title">Fully Exempt (Not Covered) — 21 CFR § 112.4(a)</div>
+              <p>A farm is not covered by the Produce Safety Rule if their average annual produce sales over the preceding 3 years is less than the FDA inflation-adjusted threshold (<strong>$34,324</strong> for 2026).</p>
+            </div>
+            <div class="helper-bullet">
+              <div class="bullet-title">Partially Exempt (Qualified Exemption) — 21 CFR § 112.5</div>
+              <p>A farm qualifies for a Qualified Exemption if:
+                <br>1. Average annual total food sales over the preceding 3 years is less than the inflation-adjusted threshold (<strong>$686,476</strong> for 2026).
+                <br>2. Sales to "qualified end-users" (consumers, or local restaurants/retail stores in the same state or within 275 miles) exceeds sales to all other buyers combined.
+              </p>
+            </div>
+            <div class="helper-bullet">
+              <div class="bullet-title">IRS Schedule F Bookkeeping Mappings</div>
+              <p>To verify compliance for an inspector using your tax records:
+                <br>• <strong>Gross Produce Sales</strong>: Extract produce-only sales from <strong>Schedule F (Line 2)</strong>. Do not use the total Line 2 if your farm raises non-produce products like livestock, dairy, or wool.
+                <br>• <strong>Total Food Sales</strong>: Sum raised food product sales from <strong>Line 2</strong> and resold food product sales from <strong>Line 1b</strong>. Subtract non-food items (e.g., timber, wool, or flowers). Note that animal feed (such as hay and silage) <strong>must</strong> be included.
+                <br>• <strong>Qualified End-User Sales</strong>: Sum direct-to-consumer sales (CSA, farmers' markets, farmstand) and sales to local retailers/restaurants located in-state or within 275 miles. <strong>Do not include sales to distributors, brokers, or packers</strong>.
+              </p>
+            </div>
+            <div class="helper-footer">
+              <p>💡 <strong>Recordkeeping Requirement:</strong> Under 21 CFR § 112.7, even if exempt, you MUST keep written records documenting your annual sales averages and have them available for inspection within 24 hours of request.</p>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-content">
+        <p>© 2026 Practical Farm Tools. All rights reserved.</p>
+        <p>Built for offline reliability, ease of use, and inspector compliance.</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Letter Preview Modal Overlay (hides during general UI view, displays on request, hides during print except the letter itself) -->
+  <div id="preview-modal" class="modal-overlay no-print hidden">
+    <div class="modal-box">
+      <div class="modal-header-actions">
+        <h3>Exemption Document Preview</h3>
+        <div class="modal-buttons">
+          <button id="btn-modal-print" class="btn btn-primary">🖨️ Print Document</button>
+          <button id="btn-modal-close" class="btn btn-secondary">Close Preview</button>
+        </div>
+      </div>
+      <div class="modal-scroll-area">
+        <!-- We will put a clone/representation of the print-letter inside here so they can preview it -->
+        <div id="modal-letter-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Print-Only Letter Document (This is hidden in standard screen layout, and made visible ONLY when printing) -->
+  <div id="print-letter" class="print-only">
+    <div class="letter-border">
+      <div class="letter-header">
+        <div class="letter-logo">🌾 PRACTICAL FARM TOOLS</div>
+        <div class="letter-title-box">
+          <h2 id="p-letter-title">FSMA PRODUCE SAFETY RULE EXEMPTION RECORD</h2>
+          <p class="compliance-subtitle">Annual Exemption Documentation | Prepared under 21 CFR § 112.7</p>
+        </div>
+      </div>
+
+      <div class="letter-section-grid">
+        <div class="letter-col">
+          <h4 class="section-title">FARM PROFILE</h4>
+          <p><strong>Farm Legal Name:</strong> <span class="field-print" id="p-farm-name">--</span></p>
+          <p><strong>Physical Address:</strong> <span class="field-print" id="p-farm-address">--</span></p>
+          <p><strong>Owner / Operator:</strong> <span class="field-print" id="p-contact-name">--</span></p>
+          <p><strong>Contact Details:</strong> <span class="field-print" id="p-contact-phone">--</span> | <span class="field-print" id="p-contact-email">--</span></p>
+        </div>
+        <div class="letter-col right-align">
+          <h4 class="section-title">RECORD DETAILS</h4>
+          <p><strong>Assessment Year:</strong> <span class="field-print" id="p-assessment-year">2026</span></p>
+          <p><strong>Calculation Date:</strong> <span class="field-print" id="p-calc-date">2026-06-10</span></p>
+          <p><strong>FDA Threshold Update:</strong> <span class="field-print" id="p-threshold-update">2026-06-10</span></p>
+          <p><strong>Status:</strong> <span class="field-print bold-status" id="p-exemption-status">--</span></p>
+        </div>
+      </div>
+
+      <div class="exemption-banner" id="p-status-banner">
+        <h3 id="p-banner-title">--</h3>
+        <p id="p-banner-desc">--</p>
+      </div>
+
+      <h4 class="section-title">3-YEAR SALES LEDGER & MATH EXPLANATION</h4>
+      <table class="ledger-table">
+        <thead>
+          <tr>
+            <th>Assessment Year</th>
+            <th>Gross Produce Sales ($)</th>
+            <th>Gross Total Food Sales ($)</th>
+            <th>Qualified End-User Sales ($)</th>
+            <th>Qualified End-User %</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td id="p-year-0">2023</td>
+            <td id="p-val-produce-0">$0</td>
+            <td id="p-val-food-0">$0</td>
+            <td id="p-val-local-0">$0</td>
+            <td id="p-pct-local-0">0%</td>
+          </tr>
+          <tr>
+            <td id="p-year-1">2024</td>
+            <td id="p-val-produce-1">$0</td>
+            <td id="p-val-food-1">$0</td>
+            <td id="p-val-local-1">$0</td>
+            <td id="p-pct-local-1">0%</td>
+          </tr>
+          <tr>
+            <td id="p-year-2">2025</td>
+            <td id="p-val-produce-2">$0</td>
+            <td id="p-val-food-2">$0</td>
+            <td id="p-val-local-2">$0</td>
+            <td id="p-pct-local-2">0%</td>
+          </tr>
+          <tr class="math-summary-row">
+            <td><strong>3-Year Average</strong></td>
+            <td id="p-avg-produce"><strong>$0</strong></td>
+            <td id="p-avg-food"><strong>$0</strong></td>
+            <td id="p-avg-local"><strong>$0</strong></td>
+            <td id="p-avg-pct-local"><strong>0%</strong></td>
+          </tr>
+          <tr class="threshold-reference-row">
+            <td><strong>FDA Inflation Threshold</strong></td>
+            <td id="p-threshold-produce">$34,324</td>
+            <td id="p-threshold-food">$686,476</td>
+            <td>N/A</td>
+            <td>> 50% Required</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="legal-citation-box">
+        <h4>APPLICABLE REGULATORY CITATIONS</h4>
+        <p id="p-regulatory-citation">--</p>
+      </div>
+
+      <div class="declaration-box">
+        <h4>COMPLIANCE DECLARATION</h4>
+        <p>I hereby certify and declare under penalty of perjury under the laws of the State of <span id="p-declaration-state">Maine</span> and the United States of America that the gross sales figures and distribution percentages detailed above are true, accurate, and correct representations of our farm's financial records. Supporting documentation (tax records, invoices, sales ledger receipts) are maintained at our farm headquarters, will be retained for a minimum of 3 years in accordance with 21 CFR § 112.162, and will be made available to FDA or State of <span id="p-inspection-state">Maine</span> inspectors within 24 hours of a formal regulatory request as required by 21 CFR § 112.7.</p>
+      </div>
+
+      <div class="letter-signature-grid">
+        <div class="sig-line-box">
+          <div class="sig-line"></div>
+          <p>Certified Owner/Operator Signature</p>
+        </div>
+        <div class="sig-line-box">
+          <div class="sig-line"></div>
+          <p>Printed Name & Title</p>
+        </div>
+        <div class="sig-line-box">
+          <div class="sig-line"></div>
+          <p>Date Signed</p>
+        </div>
+      </div>
+
+      <div class="letter-footer">
+        <p>This verification document was generated in accordance with the FDA FSMA Produce Safety Rule (21 CFR Part 112) guidelines. The inflation-adjusted values shown are derived from the official FDA database using Gross Domestic Product (GDP) Implicit Price Deflators.</p>
+        <p class="pft-tag">Practical Farm Tools Exemption Certification Service | fma-exempt-v1.0</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main JavaScript File -->
+  <script src="app.js"></script>
+</body>
+</html>

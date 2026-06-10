@@ -93,7 +93,8 @@ export const UI_TRANSLATIONS = {
     pesticideSynced: "Synced",
     pesticidePending: "Offline Pending",
     pesticideCompleteBtn: "Complete",
-    pesticideSuccess: "Pesticide report logged successfully!"
+    pesticideSuccess: "Pesticide report logged successfully!",
+    pesticideQuickLogBtn: "⚡ Repeat Last Spray Log"
   },
   es: {
     dashboardTitle: "🚜 Practical Pesticide Log",
@@ -159,7 +160,8 @@ export const UI_TRANSLATIONS = {
     pesticideSynced: "Sincronizado",
     pesticidePending: "Pendiente Fuera de Línea",
     pesticideCompleteBtn: "Completar",
-    pesticideSuccess: "¡Registro de pesticida guardado con éxito!"
+    pesticideSuccess: "¡Registro de pesticida guardado con éxito!",
+    pesticideQuickLogBtn: "⚡ Repetir Último Registro de Riego"
   },
   pt: {
     dashboardTitle: "🚜 Practical Pesticide Log",
@@ -225,7 +227,8 @@ export const UI_TRANSLATIONS = {
     pesticideSynced: "Sincronizado",
     pesticidePending: "Pendente Offline",
     pesticideCompleteBtn: "Concluir",
-    pesticideSuccess: "Registro de defensivo salvo com sucesso!"
+    pesticideSuccess: "Registro de defensivo salvo com sucesso!",
+    pesticideQuickLogBtn: "⚡ Repetir Último Registro de Pulverização"
   },
   fr: {
     dashboardTitle: "🚜 Practical Pesticide Log",
@@ -291,7 +294,8 @@ export const UI_TRANSLATIONS = {
     pesticideSynced: "Synchro",
     pesticidePending: "Hors Ligne",
     pesticideCompleteBtn: "Compléter",
-    pesticideSuccess: "Rapport sur les pesticides enregistré avec succès !"
+    pesticideSuccess: "Rapport sur les pesticides enregistré avec succès !",
+    pesticideQuickLogBtn: "⚡ Répéter le Dernier Rapport d'Épandage"
   }
 };
 
@@ -354,20 +358,25 @@ export default function HomeScreen() {
   const [isCertifiedCheck, setIsCertifiedCheck] = useState(false);
   const [isStateModalVisible, setIsStateModalVisible] = useState(false);
   const [stateSearchQuery, setStateSearchQuery] = useState('');
+  const [lastSpray, setLastSpray] = useState<any | null>(null);
 
-  // Load selected state from AsyncStorage on mount
+  // Load selected state and last spray from AsyncStorage on mount
   useEffect(() => {
-    async function loadSelectedState() {
+    async function loadInitialData() {
       try {
         const savedState = await AsyncStorage.getItem('@farmconnect:selected_state');
         if (savedState) {
           setPesticideState(savedState);
         }
+        const savedLast = await AsyncStorage.getItem('@farmconnect:last_spray');
+        if (savedLast) {
+          setLastSpray(JSON.parse(savedLast));
+        }
       } catch (err) {
-        console.error('Failed to load selected state:', err);
+        console.error('Failed to load initial data:', err);
       }
     }
-    loadSelectedState();
+    loadInitialData();
   }, []);
 
   // Set pesticide state and persist to AsyncStorage
@@ -594,6 +603,97 @@ export default function HomeScreen() {
       );
     }
 
+    let parsedDyn: Record<string, any> = {};
+    try {
+      parsedDyn = JSON.parse(report.dynamic_fields || '{}');
+    } catch (e) {}
+
+    // Vermont Act 182 neonic bloom check
+    // Vermont Act 182 neonic bloom check (checks both chemical name and active ingredients)
+    const chemAndActive = `${report.chemical_name || ''} ${parsedDyn.active_ingredients || ''}`.toLowerCase();
+    const isNeonic = chemAndActive.includes('neonicotinoid') || 
+                     ['imidacloprid', 'clothianidin', 'thiamethoxam', 'dinotefuran', 'acetamiprid'].some(n => 
+                       chemAndActive.includes(n)
+                     );
+    const isBloomCertified = parsedDyn.vt_bloom_certified === 'true' || parsedDyn.vt_bloom_certified === true;
+    if (report.state === 'VT' && isNeonic && !isBloomCertified) {
+      warnings.push(lang === 'en'
+        ? 'VT Act 182: Bloom stage certification is required before spraying neonicotinoids.'
+        : 'VT Act 182: Se requiere la certificación de la etapa de floración antes de rociar neonicotinoides.'
+      );
+    }
+
+    // Maine Wild Blueberry neighbor notification check
+    const isBlueberry = (report.crop_treated || '').toLowerCase().includes('blueberry') || 
+                        (report.crop_treated || '').toLowerCase().includes('vaccinium');
+    const isAbutterNotified = parsedDyn.blueberry_notification_confirmed === 'true' || parsedDyn.blueberry_notification_confirmed === true;
+    if (report.state === 'ME' && isBlueberry && !isAbutterNotified) {
+      warnings.push(lang === 'en'
+        ? 'ME LD 356: Wild blueberry application requires neighbor notification.'
+        : 'ME LD 356: La aplicación de arándanos silvestres requiere notificación al vecino.'
+      );
+    }
+
+    // Connecticut PFAS check (PA 24-59)
+    const isPfasConfirmed = parsedDyn.ct_pfas_apparel_confirmed === 'true' || parsedDyn.ct_pfas_apparel_confirmed === true;
+    if (report.state === 'CT' && !isPfasConfirmed) {
+      warnings.push(lang === 'en'
+        ? 'CT PA 24-59: Severe Wet Weather Gear PFAS Disclosure verification is required.'
+        : 'CT PA 24-59: Se requiere la verificación de la declaración de PFAS para equipo de clima húmedo severo.'
+      );
+    }
+
+    // Massachusetts School Buffer check (CFPA 2026 Children's Shield)
+    const isMaBufferConfirmed = parsedDyn.ma_school_buffer_confirmed === 'true' || parsedDyn.ma_school_buffer_confirmed === true;
+    if (report.state === 'MA' && !isMaBufferConfirmed) {
+      warnings.push(lang === 'en'
+        ? 'MA CFPA: Confirm application is outside 150ft school/daycare buffer.'
+        : 'MA CFPA: Confirme que la aplicación esté fuera del límite de 150 pies de escuelas/guarderías.'
+      );
+    }
+
+    // Rhode Island School Registry check
+    const isSchoolNotified = parsedDyn.ri_school_notified_24h === 'true' || parsedDyn.ri_school_notified_24h === true;
+    if (report.state === 'RI' && !isSchoolNotified) {
+      warnings.push(lang === 'en'
+        ? 'RI Reclass: 24h School Registry Notification must be sent before application.'
+        : 'RI Reclass: Se debe enviar la notificación de registro escolar de 24 horas antes de la aplicación.'
+      );
+    }
+
+    // New Hampshire state property check
+    const isStateProperty = parsedDyn.nh_state_property === 'true' || parsedDyn.nh_state_property === true;
+    if (report.state === 'NH' && isStateProperty) {
+      const startTime = parsedDyn.start_time || '';
+      let isDuskToDawn = true;
+      if (startTime) {
+        const cleanTime = startTime.trim().toUpperCase();
+        const ampmMatch = cleanTime.match(/(\d+):(\d+)\s*(AM|PM)/);
+        let hour = NaN;
+        if (ampmMatch) {
+          let h = parseInt(ampmMatch[1], 10);
+          const isPm = ampmMatch[3] === 'PM';
+          if (isPm && h < 12) h += 12;
+          if (!isPm && h === 12) h = 0;
+          hour = h;
+        } else {
+          const parts = cleanTime.split(':');
+          if (parts.length >= 2) {
+            hour = parseInt(parts[0], 10);
+          }
+        }
+        if (!isNaN(hour)) {
+          isDuskToDawn = (hour >= 19 || hour < 6);
+        }
+      }
+      if (!isDuskToDawn) {
+        warnings.push(lang === 'en'
+          ? 'NH HB 1431: Applications on State Property are restricted to Dusk-to-Dawn hours only.'
+          : 'NH HB 1431: Las aplicaciones en propiedades estatales están restringidas a las horas de anochecer a amanecer únicamente.'
+        );
+      }
+    }
+
     // Check required fields defined in pesticide state laws JSON
     const stateData = (statePesticideLaws as any)[report.state];
     if (stateData && stateData.fields) {
@@ -652,18 +752,24 @@ export default function HomeScreen() {
       return;
     }
 
+    // Merge static amount_applied input into dynamic values for compliance checking and saving
+    const activeDynamicValues: Record<string, string> = {
+      ...dynamicValues,
+      amount_applied: amountApplied
+    };
+
     // Dynamic field validation
     const stateData = (statePesticideLaws as any)[pesticideState];
     if (stateData && stateData.fields) {
       for (const field of stateData.fields) {
-        const val = dynamicValues[field.name] || '';
-
+        const val = activeDynamicValues[field.name] || '';
+ 
         // Required check
         if (field.required && !val.trim()) {
           alert(field.error_message || `Field "${field.label}" is required.`);
           return;
         }
-
+ 
         if (val.trim()) {
           // Type number validation
           if (field.type === 'number') {
@@ -681,7 +787,7 @@ export default function HomeScreen() {
               return;
             }
           }
-
+ 
           // Regex validation
           if (field.regex) {
             try {
@@ -697,19 +803,19 @@ export default function HomeScreen() {
         }
       }
     }
-
+ 
     const reportId = uuidv4();
     const timestamp = new Date().toISOString();
-
+ 
     // Encrypt sensitive dynamic fields for storage in dynamic_fields JSON
-    const encryptedDynamicValues = { ...dynamicValues };
+    const encryptedDynamicValues = { ...activeDynamicValues };
     if (encryptedDynamicValues.applicator_name) {
       encryptedDynamicValues.applicator_name = encryptField(encryptedDynamicValues.applicator_name, clientId);
     }
     if (encryptedDynamicValues.applicator_license) {
       encryptedDynamicValues.applicator_license = encryptField(encryptedDynamicValues.applicator_license, clientId);
     }
-
+ 
     const newReport: any = {
       id: reportId,
       field_id: pesticideFieldId,
@@ -722,25 +828,25 @@ export default function HomeScreen() {
       sync_state: 'dirty',
       is_deleted: 0
     };
-
+ 
     const complianceColumns = [
       'epa_reg_no', 'applicator_name', 'applicator_license', 'area_treated',
       'crop_treated', 'target_pest', 'application_method', 'start_time',
       'end_time', 'wind_speed', 'wind_direction', 'temperature',
       'permit_number', 'county', 'rei_hours', 'phi_days'
     ];
-
+ 
     if (areaTreated.trim() && !isNaN(areaVal)) {
       newReport.area_treated = areaVal;
     } else {
       newReport.area_treated = null;
     }
-
+ 
     complianceColumns.forEach(col => {
       if (col === 'area_treated') return;
-
-      if (dynamicValues[col] !== undefined) {
-        let val: any = dynamicValues[col];
+ 
+      if (activeDynamicValues[col] !== undefined) {
+        let val: any = activeDynamicValues[col];
         if (col === 'wind_speed' || col === 'temperature') {
           val = parseFloat(val);
           if (isNaN(val)) val = null;
@@ -753,13 +859,13 @@ export default function HomeScreen() {
         newReport[col] = null;
       }
     });
-
+ 
     // Save signature
     if (!newReport.applicator_name && certifiedApplicatorName.trim()) {
       newReport.applicator_name = certifiedApplicatorName.trim();
     }
     newReport.applicator_signature = `Digitally Signed by ${certifiedApplicatorName.trim()} on ${timestamp} (Client ID: ${clientId})`;
-
+ 
     // Encrypt sensitive fields in newReport columns
     if (newReport.applicator_name) {
       newReport.applicator_name = encryptField(newReport.applicator_name, clientId);
@@ -770,9 +876,24 @@ export default function HomeScreen() {
     if (newReport.applicator_signature) {
       newReport.applicator_signature = encryptField(newReport.applicator_signature, clientId);
     }
-
+ 
     try {
       await writeMutation(db, 'chemical_reports', reportId, 'INSERT', newReport);
+ 
+      // Save last spray info for quick reuse
+      const lastSprayInfo = {
+        chemicalName: chemicalName.trim(),
+        amountApplied: amountApplied,
+        areaTreated: areaTreated,
+        dynamicValues: activeDynamicValues,
+        certifiedApplicatorName: certifiedApplicatorName.trim(),
+        pesticideState: pesticideState,
+        pesticideFieldId: pesticideFieldId,
+        ts: Date.now()
+      };
+      await AsyncStorage.setItem('@farmconnect:last_spray', JSON.stringify(lastSprayInfo));
+      setLastSpray(lastSprayInfo);
+
       setChemicalName('');
       setAmountApplied('');
       setAreaTreated('');
@@ -786,6 +907,23 @@ export default function HomeScreen() {
       console.error('Error logging chemical report:', err);
       alert('Error inserting pesticide report: ' + String(err));
     }
+  };
+
+  const handleQuickLog = () => {
+    if (!lastSpray) return;
+    setChemicalName(lastSpray.chemicalName || '');
+    setAmountApplied(lastSpray.amountApplied || '');
+    setAreaTreated(lastSpray.areaTreated || '');
+    setDynamicValues(lastSpray.dynamicValues || {});
+    setCertifiedApplicatorName(lastSpray.certifiedApplicatorName || '');
+    setPesticideState(lastSpray.pesticideState || 'TX');
+    setPesticideFieldId(lastSpray.pesticideFieldId || 'Sector 1');
+    setIsCertifiedCheck(true);
+    alert(
+      lang === 'en'
+        ? `⚡ Repeat Log Loaded: ${lastSpray.chemicalName} on ${lastSpray.pesticideFieldId}`
+        : `⚡ Carga de Registro Repetida: ${lastSpray.chemicalName} en ${lastSpray.pesticideFieldId}`
+    );
   };
 
   // Handle soft deleting chemical report
@@ -1180,6 +1318,16 @@ export default function HomeScreen() {
         <Text style={styles.cardDesc}>{t.pesticideDesc}</Text>
 
         <View style={styles.pesticideForm}>
+          {lastSpray && (
+            <TouchableOpacity 
+              style={styles.quickLogButton} 
+              onPress={handleQuickLog}
+            >
+              <Text style={styles.quickLogButtonText}>
+                {t.pesticideQuickLogBtn} ({lastSpray.chemicalName} on {lastSpray.pesticideFieldId})
+              </Text>
+            </TouchableOpacity>
+          )}
           <Text style={styles.pesticideLabel}>{t.pesticideSelectState}</Text>
           <TouchableOpacity 
             style={styles.stateSelectButton} 
@@ -1399,8 +1547,32 @@ export default function HomeScreen() {
             </Text>
           )}
 
-          {statePesticideLaws[pesticideState as keyof typeof statePesticideLaws]?.fields.map((field: any) => {
-            if (field.type === 'select') {
+          {statePesticideLaws[pesticideState as keyof typeof statePesticideLaws]?.fields
+            .filter((field: any) => field.name !== 'amount_applied')
+            .map((field: any) => {
+            if (field.type === 'checkbox') {
+              const isChecked = dynamicValues[field.name] === 'true';
+              return (
+                <View key={field.name} style={styles.dynamicFieldContainer}>
+                  <TouchableOpacity 
+                    style={styles.checkboxRow}
+                    onPress={() => setDynamicValues(prev => ({ ...prev, [field.name]: isChecked ? 'false' : 'true' }))}
+                  >
+                    <View style={[styles.checkbox, isChecked && styles.checkboxChecked]}>
+                      {isChecked && <Text style={styles.checkmark}>✓</Text>}
+                    </View>
+                    <Text style={styles.checkboxLabel}>
+                      {field.label}{field.required && ' *'}
+                    </Text>
+                  </TouchableOpacity>
+                  {field.error_message && (
+                    <Text style={{ fontSize: 10, color: '#61746B', marginTop: 2, marginHorizontal: 4, fontStyle: 'italic' }}>
+                      💡 {field.error_message}
+                    </Text>
+                  )}
+                </View>
+              );
+            } else if (field.type === 'select') {
               return (
                 <View key={field.name} style={styles.dynamicFieldContainer}>
                   <Text style={styles.dynamicFieldLabel}>
@@ -2144,6 +2316,28 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 12
+  },
+  quickLogButton: {
+    backgroundColor: '#E8F5E9',
+    borderColor: '#81C784',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#2E7D32',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2
+  },
+  quickLogButtonText: {
+    color: '#2E7D32',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center'
   },
   pesticideLabel: {
     fontSize: 13,

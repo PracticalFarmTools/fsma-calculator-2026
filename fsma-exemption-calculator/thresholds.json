@@ -1,0 +1,49 @@
+{
+  "last_updated": "2026-06-10",
+  "assessment_years": {
+    "2026": {
+      "produce_threshold": 34324,
+      "total_food_threshold": 686476,
+      "years_used": [
+        2023,
+        2024,
+        2025
+      ]
+    },
+    "2025": {
+      "produce_threshold": 33326,
+      "total_food_threshold": 666515,
+      "years_used": [
+        2022,
+        2023,
+        2024
+      ]
+    }
+  },
+  "yearly_values": {
+    "2021": {
+      "produce": 30112,
+      "food": 602234
+    },
+    "2022": {
+      "produce": 32253,
+      "food": 645068
+    },
+    "2023": {
+      "produce": 33447,
+      "food": 668937
+    },
+    "2024": {
+      "produce": 34277,
+      "food": 685541
+    },
+    "2025": {
+      "produce": 35247,
+      "food": 704950
+    },
+    "2011": {
+      "produce": 25000,
+      "food": 500000
+    }
+  }
+}
