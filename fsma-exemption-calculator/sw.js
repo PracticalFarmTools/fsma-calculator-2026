@@ -1,13 +1,13 @@
-const CACHE_NAME = 'fsma-calculator-v1';
+const CACHE_NAME = 'fsma-calculator-v3';
 const ASSETS = [
   './',
-  './index.html',
   './styles.css',
   './app.js',
   './thresholds.json',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png'
+  './icon-512.png',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap'
 ];
 
 // Install Event - cache assets
@@ -48,8 +48,9 @@ self.addEventListener('fetch', (e) => {
       // Clone response to put it in cache
       const resClone = res.clone();
       caches.open(CACHE_NAME).then((cache) => {
-        // Only cache HTTP/HTTPS successful responses (avoid chrome-extension issues)
-        if (e.request.url.startsWith('http') && res.status === 200) {
+        // Cache successful HTTP/HTTPS responses, including opaque cross-origin
+        // responses (status 0) from the Google Fonts CDN so fonts work offline
+        if (e.request.url.startsWith('http') && (res.status === 200 || res.type === 'opaque')) {
           cache.put(e.request, resClone);
         }
       });

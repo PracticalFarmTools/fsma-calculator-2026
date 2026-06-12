@@ -33,6 +33,7 @@ let state = {
   farmName: "",
   farmAddress: "",
   farmState: "ME",
+  stateManuallySet: false,
   contactName: "",
   contactPhone: "",
   contactEmail: "",
@@ -160,6 +161,7 @@ const els = {
 // Initialize App
 async function init() {
   await loadThresholds();
+  populateYearOptions();
   setupNetworkMonitoring();
   loadSavedState();
   updateYearsAndLimits();
@@ -175,12 +177,35 @@ async function loadThresholds() {
       activeThresholds = await res.json();
       console.log('Successfully loaded thresholds database:', activeThresholds);
       els.syncBadge.innerText = `Updated ${activeThresholds.last_updated || 'recently'}`;
+    } else {
+      console.warn('thresholds.json returned status', res.status, '- using offline fallback data.');
+      activeThresholds = FALLBACK_THRESHOLDS;
+      els.syncBadge.innerText = `Offline Thresholds`;
     }
   } catch (err) {
     console.warn('Could not fetch thresholds.json. Using offline fallback data.', err);
     activeThresholds = FALLBACK_THRESHOLDS;
     els.syncBadge.innerText = `Offline Thresholds`;
   }
+}
+
+// Build the assessment-year dropdown from the loaded thresholds (newest first)
+function populateYearOptions() {
+  const years = Object.keys(activeThresholds.assessment_years || {}).sort((a, b) => Number(b) - Number(a));
+  if (!years.length) return;
+  
+  els.assessmentYear.innerHTML = '';
+  years.forEach((yr) => {
+    const data = activeThresholds.assessment_years[yr];
+    const opt = document.createElement('option');
+    opt.value = yr;
+    opt.textContent = `${yr} (Uses ${data.years_used[0]} - ${data.years_used[2]} records)`;
+    els.assessmentYear.appendChild(opt);
+  });
+  
+  // Default to the newest assessment year; loadSavedState may override this
+  els.assessmentYear.value = years[0];
+  state.assessmentYear = years[0];
 }
 
 // Set up online/offline event listeners
@@ -210,6 +235,9 @@ function loadSavedState() {
         if (!state.projections) {
           state.projections = { produce: "", food: "", local: "" };
         }
+        if (state.stateManuallySet === undefined) {
+          state.stateManuallySet = false;
+        }
         
         // Populate inputs
         els.farmName.value = state.farmName || "";
@@ -218,7 +246,14 @@ function loadSavedState() {
         els.contactName.value = state.contactName || "";
         els.contactPhone.value = state.contactPhone || "";
         els.contactEmail.value = state.contactEmail || "";
-        els.assessmentYear.value = state.assessmentYear || "2026";
+        
+        // Restore saved assessment year only if it still exists in the dropdown;
+        // otherwise fall back to the newest available year
+        if (state.assessmentYear && els.assessmentYear.querySelector(`option[value="${state.assessmentYear}"]`)) {
+          els.assessmentYear.value = state.assessmentYear;
+        } else {
+          state.assessmentYear = els.assessmentYear.value;
+        }
         
         for (let i = 0; i < 3; i++) {
           els.produceInputs[i].value = (state.sales.produce[i] !== undefined && state.sales.produce[i] !== null && state.sales.produce[i] !== "") ? state.sales.produce[i] : "";
@@ -284,6 +319,19 @@ function updateYearsAndLimits() {
   if (projNextYearLabel) projNextYearLabel.innerText = nextYear;
   if (projCurrentYearLabel) projCurrentYearLabel.innerText = currentYear;
   if (projMathYears) projMathYears.innerText = `${years[1]}, ${years[2]}, and ${currentYear} (Projected)`;
+  
+  const projThresholdYear = document.getElementById('proj-threshold-year');
+  if (projThresholdYear) projThresholdYear.innerText = state.assessmentYear;
+  
+  // Keep the static reference card in sync with the selected assessment year
+  const helperProduce = document.getElementById('helper-produce-threshold');
+  const helperFood = document.getElementById('helper-food-threshold');
+  const helperYearProduce = document.getElementById('helper-year-produce');
+  const helperYearFood = document.getElementById('helper-year-food');
+  if (helperProduce) helperProduce.innerText = yearData.produce_threshold.toLocaleString();
+  if (helperFood) helperFood.innerText = yearData.total_food_threshold.toLocaleString();
+  if (helperYearProduce) helperYearProduce.innerText = state.assessmentYear;
+  if (helperYearFood) helperYearFood.innerText = state.assessmentYear;
 }// Helper to reset results when entries fail validation checks
 function resetResultsForValidation() {
   els.avgProduce.innerText = "--";
@@ -301,12 +349,11 @@ function resetResultsForValidation() {
   }
 }
 
-// Main Exemption Calculation Logic
-function calculateExemption() {
-  const yearData = activeThresholds.assessment_years[state.assessmentYear];
-  if (!yearData) return;
-  
-  // Auto-detect and set state from address if possible
+// Auto-detect the farm state from the address field (e.g. "... Nobleboro, ME 04555").
+// Only runs while the user types in the address field, and never overrides a state
+// the user has explicitly chosen from the dropdown.
+function autoDetectStateFromAddress() {
+  if (state.stateManuallySet) return;
   const addressVal = els.farmAddress.value || "";
   const stateMatch = addressVal.match(/\b([A-Z]{2})\b(?:\s+\d{5}(?:-\d{4})?)?\s*$/i);
   if (stateMatch) {
@@ -316,6 +363,12 @@ function calculateExemption() {
       state.farmState = code;
     }
   }
+}
+
+// Main Exemption Calculation Logic
+function calculateExemption() {
+  const yearData = activeThresholds.assessment_years[state.assessmentYear];
+  if (!yearData) return;
 
   // Calculate averages
   let sumProduce = 0, sumFood = 0, sumLocal = 0;
@@ -355,6 +408,10 @@ function calculateExemption() {
     const fVal = parseFloat(els.foodInputs[i].value) || 0;
     const lVal = parseFloat(els.localInputs[i].value) || 0;
     
+    if (pVal < 0 || fVal < 0 || lVal < 0) {
+      warningMsg = `In ${yr}, sales values cannot be negative. Please enter $0 or greater.`;
+      break;
+    }
     if (pVal > fVal) {
       warningMsg = `In ${yr}, Produce Sales ($${pVal.toLocaleString()}) cannot be greater than Total Food Sales ($${fVal.toLocaleString()}).`;
       break;
@@ -613,6 +670,12 @@ function calculateProjection() {
   }
   
   // Validations
+  if (pProj < 0 || fProj < 0 || lProj < 0) {
+    projStatusBadge.innerText = "Check Projections";
+    projStatusBadge.className = "status-badge status-undetermined";
+    projStatusExplanation.innerHTML = "⚠️ Projected sales values cannot be negative.";
+    return;
+  }
   if (pProj > fProj) {
     projStatusBadge.innerText = "Check Projections";
     projStatusBadge.className = "status-badge status-undetermined";
@@ -701,12 +764,16 @@ function setupEventListeners() {
   profileFields.forEach((field) => {
     els[field].addEventListener('input', (e) => {
       state[field] = e.target.value;
+      if (field === 'farmAddress') {
+        autoDetectStateFromAddress();
+      }
       calculateExemption();
     });
   });
   
   els.farmState.addEventListener('change', (e) => {
     state.farmState = e.target.value;
+    state.stateManuallySet = true; // user's explicit choice wins over address auto-detection
     calculateExemption();
   });
   
@@ -757,8 +824,11 @@ function setupEventListeners() {
   
   // Print preview trigger
   els.btnPrintPreview.addEventListener('click', () => {
-    // Populate modal letter content with a clone of the print letter
-    els.modalLetterContent.innerHTML = document.getElementById('print-letter').innerHTML;
+    // Clone the print letter and strip all IDs from the copy so the modal
+    // never creates duplicate IDs that could hijack getElementById updates
+    const letterClone = document.getElementById('print-letter').cloneNode(true);
+    letterClone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+    els.modalLetterContent.innerHTML = letterClone.innerHTML;
     els.previewModal.classList.remove('hidden');
     document.body.style.overflow = 'hidden'; // Lock background scrolling
   });

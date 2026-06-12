@@ -43,6 +43,107 @@ const scenarios = [
       local: [40000, 0, 0]
     },
     expectedStatus: "exempt"
+  },
+  // ---- Boundary & income-spectrum cases (2026 thresholds: produce $34,324 / food $686,476) ----
+  {
+    name: "Boundary: homestead scale (~$5k produce)",
+    assessmentYear: "2026",
+    sales: {
+      produce: [5000, 5000, 5000],
+      food: [8000, 8000, 8000],
+      local: [8000, 8000, 8000]
+    },
+    expectedStatus: "exempt"
+  },
+  {
+    name: "Boundary: produce avg EXACTLY at $34,324 (must be exempt — § 112.4(a) covers only farms ABOVE the threshold)",
+    assessmentYear: "2026",
+    sales: {
+      produce: [34324, 34324, 34324],
+      food: [50000, 50000, 50000],
+      local: [40000, 40000, 40000]
+    },
+    expectedStatus: "exempt"
+  },
+  {
+    name: "Boundary: produce avg $1 over threshold, local majority, food under limit (qualified)",
+    assessmentYear: "2026",
+    sales: {
+      produce: [34325, 34325, 34325],
+      food: [50000, 50000, 50000],
+      local: [40000, 40000, 40000]
+    },
+    expectedStatus: "qualified"
+  },
+  {
+    name: "Boundary: local sales EXACTLY 50% of food (must NOT qualify — § 112.5 requires local to EXCEED other buyers)",
+    assessmentYear: "2026",
+    sales: {
+      produce: [100000, 100000, 100000],
+      food: [200000, 200000, 200000],
+      local: [100000, 100000, 100000]
+    },
+    expectedStatus: "not_exempt"
+  },
+  {
+    name: "Boundary: local sales 50% + $1 (qualifies)",
+    assessmentYear: "2026",
+    sales: {
+      produce: [100000, 100000, 100000],
+      food: [200000, 200000, 200000],
+      local: [100001, 100001, 100001]
+    },
+    expectedStatus: "qualified"
+  },
+  {
+    name: "Boundary: food avg EXACTLY at $686,476 (must NOT qualify — § 112.5 requires LESS THAN the threshold)",
+    assessmentYear: "2026",
+    sales: {
+      produce: [100000, 100000, 100000],
+      food: [686476, 686476, 686476],
+      local: [500000, 500000, 500000]
+    },
+    expectedStatus: "not_exempt"
+  },
+  {
+    name: "Boundary: food avg $1 under threshold with local majority (qualifies)",
+    assessmentYear: "2026",
+    sales: {
+      produce: [100000, 100000, 100000],
+      food: [686475, 686475, 686475],
+      local: [500000, 500000, 500000]
+    },
+    expectedStatus: "qualified"
+  },
+  {
+    name: "Income spectrum: large diversified farm, low produce ($30k avg) but $2M total food (still fully exempt — § 112.4(a) keys on produce only)",
+    assessmentYear: "2026",
+    sales: {
+      produce: [30000, 30000, 30000],
+      food: [2000000, 2000000, 2000000],
+      local: [200000, 200000, 200000]
+    },
+    expectedStatus: "exempt"
+  },
+  {
+    name: "Income spectrum: $2M wholesale vegetable operation (fully covered)",
+    assessmentYear: "2026",
+    sales: {
+      produce: [1800000, 2000000, 2200000],
+      food: [1800000, 2000000, 2200000],
+      local: [100000, 120000, 110000]
+    },
+    expectedStatus: "not_exempt"
+  },
+  {
+    name: "Income spectrum: mid-size farm just over food cap despite 90% local sales (not exempt)",
+    assessmentYear: "2026",
+    sales: {
+      produce: [300000, 320000, 340000],
+      food: [700000, 720000, 740000],
+      local: [630000, 648000, 666000]
+    },
+    expectedStatus: "not_exempt"
   }
 ];
 

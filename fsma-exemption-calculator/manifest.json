@@ -2,7 +2,7 @@
   "name": "FSMA Exemption Calculator",
   "short_name": "FSMA Exempt",
   "description": "Calculate your farm's exemption status under the FDA FSMA Produce Safety Rule and generate printable compliance records.",
-  "start_url": "./index.html",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1b4322",

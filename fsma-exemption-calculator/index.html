@@ -8,6 +8,7 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1b4322">
   <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="styles.css">
   
   <!-- Premium Fonts -->
@@ -136,11 +137,12 @@
               <span class="step-num">2</span>
               <h2>Sales Records & Averages</h2>
             </div>
-            <p class="card-intro">Select the year you want to claim your exemption for (default 2026). Then enter your gross sales for the preceding three years. All sales figures are saved automatically as you type.</p>
+            <p class="card-intro">Select the year you want to claim your exemption for. Then enter your gross sales for the preceding three years. All sales figures are saved automatically as you type. <strong>Tip:</strong> Enter <strong>0</strong> for a year your farm operated but had no sales; leave a year <strong>blank</strong> only if your farm was not yet in business that year.</p>
             
             <div class="form-group year-select-group">
               <label for="assessment-year">Claiming Exemption for Year:</label>
               <select id="assessment-year">
+                <!-- Options populated dynamically from thresholds.json (newest year first) -->
                 <option value="2026" selected>2026 (Uses 2023 - 2025 records)</option>
               </select>
             </div>
@@ -256,7 +258,7 @@
                     <p class="mobile-help-text">Sales directly to consumers (CSA, stand, market) or local stores/restaurants in-state or within 275 miles.</p>
                     <div class="input-wrapper-prefix">
                       <span class="currency-prefix">$</span>
-                      <input type="number" class="sales-input local-sales-2" id="local-sales-2" min="0" placeholder="0">
+                      <input type="number" class="sales-input local-food-sales" id="local-sales-2" min="0" placeholder="0">
                     </div>
                   </div>
                 </div>
@@ -309,7 +311,7 @@
                 </div>
                 
                 <p class="card-intro" style="font-size: 0.75rem; border-top: 1px dashed var(--border-color); padding-top: 0.75rem; margin-bottom: 0;">
-                  💡 <strong>Exemption Math:</strong> Next year's assessment will average your sales from <span id="proj-math-years">2024, 2025, and 2026</span>. Projections are compared against the latest 2026 thresholds as a baseline estimate. Next year's official limits will adjust slightly for inflation in April.
+                  💡 <strong>Exemption Math:</strong> Next year's assessment will average your sales from <span id="proj-math-years">2024, 2025, and 2026</span>. Projections are compared against the latest <span id="proj-threshold-year">2026</span> thresholds as a baseline estimate. Next year's official limits will adjust slightly for inflation when FDA publishes updated cut-offs each spring.
                 </p>
               </div>
             </div>
@@ -344,7 +346,7 @@
                 <span class="math-val" id="avg-produce-display">$0</span>
               </div>
               <div class="math-row-sub">
-                <span class="math-label-sub">FDA Micro-Farm Limit:</span>
+                <span class="math-label-sub">Full Exemption Limit:</span>
                 <span class="math-val-sub" id="limit-produce-display">$34,324</span>
               </div>
               
@@ -353,7 +355,7 @@
                 <span class="math-val" id="avg-food-display">$0</span>
               </div>
               <div class="math-row-sub">
-                <span class="math-label-sub">FDA Qualified Limit:</span>
+                <span class="math-label-sub">Qualified Exemption Limit:</span>
                 <span class="math-val-sub" id="limit-food-display">$686,476</span>
               </div>
 
@@ -382,13 +384,13 @@
             <h3>Produce Safety Rule Exemption Criteria</h3>
             <div class="helper-bullet">
               <div class="bullet-title">Fully Exempt (Not Covered) — 21 CFR § 112.4(a)</div>
-              <p>A farm is not covered by the Produce Safety Rule if their average annual produce sales over the preceding 3 years is less than the FDA inflation-adjusted threshold (<strong>$34,324</strong> for 2026).</p>
+              <p>A farm is not covered by the Produce Safety Rule if their average annual produce sales over the preceding 3 years is <strong>$<span id="helper-produce-threshold">34,324</span> or less</strong> (the FDA inflation-adjusted threshold for <span id="helper-year-produce">2026</span>).</p>
             </div>
             <div class="helper-bullet">
               <div class="bullet-title">Partially Exempt (Qualified Exemption) — 21 CFR § 112.5</div>
               <p>A farm qualifies for a Qualified Exemption if:
-                <br>1. Average annual total food sales over the preceding 3 years is less than the inflation-adjusted threshold (<strong>$686,476</strong> for 2026).
-                <br>2. Sales to "qualified end-users" (consumers, or local restaurants/retail stores in the same state or within 275 miles) exceeds sales to all other buyers combined.
+                <br>1. Average annual total food sales over the preceding 3 years is less than the inflation-adjusted threshold (<strong>$<span id="helper-food-threshold">686,476</span></strong> for <span id="helper-year-food">2026</span>).
+                <br>2. Sales to "qualified end-users" (consumers anywhere, or restaurants/retail food establishments in the same state, on the same Indian reservation, or within 275 miles) exceeds sales to all other buyers combined.
               </p>
             </div>
             <div class="helper-bullet">
@@ -400,7 +402,7 @@
               </p>
             </div>
             <div class="helper-footer">
-              <p>💡 <strong>Recordkeeping Requirement:</strong> Under 21 CFR § 112.7, even if exempt, you MUST keep written records documenting your annual sales averages and have them available for inspection within 24 hours of request.</p>
+              <p>💡 <strong>Recordkeeping Requirement:</strong> Farms claiming a Qualified Exemption MUST establish and keep a written record reflecting that an annual eligibility review was performed (21 CFR § 112.7). Records must be readily available for FDA inspection (21 CFR § 112.166); records stored offsite must be retrievable within 24 hours of request (21 CFR § 112.162(a)). Fully exempt farms should also keep sales records to document their non-covered status.</p>
             </div>
           </div>
         </section>
@@ -438,10 +440,10 @@
   <div id="print-letter" class="print-only">
     <div class="letter-border">
       <div class="letter-header">
-        <div class="letter-logo">🌾 PRACTICAL FARM TOOLS</div>
+        <div class="letter-logo">🌱 PRACTICAL FARM TOOLS</div>
         <div class="letter-title-box">
           <h2 id="p-letter-title">FSMA PRODUCE SAFETY RULE EXEMPTION RECORD</h2>
-          <p class="compliance-subtitle">Annual Exemption Documentation | Prepared under 21 CFR § 112.7</p>
+          <p class="compliance-subtitle">Annual Exemption Documentation | FSMA Produce Safety Rule (21 CFR Part 112)</p>
         </div>
       </div>
 
@@ -524,7 +526,7 @@
 
       <div class="declaration-box">
         <h4>COMPLIANCE DECLARATION</h4>
-        <p>I hereby certify and declare under penalty of perjury under the laws of the State of <span id="p-declaration-state">Maine</span> and the United States of America that the gross sales figures and distribution percentages detailed above are true, accurate, and correct representations of our farm's financial records. Supporting documentation (tax records, invoices, sales ledger receipts) are maintained at our farm headquarters, will be retained for a minimum of 3 years in accordance with 21 CFR § 112.162, and will be made available to FDA or State of <span id="p-inspection-state">Maine</span> inspectors within 24 hours of a formal regulatory request as required by 21 CFR § 112.7.</p>
+        <p>I hereby certify and declare under penalty of perjury under the laws of the State of <span id="p-declaration-state">Maine</span> and the United States of America that the gross sales figures and distribution percentages detailed above are true, accurate, and correct representations of our farm's financial records. Supporting documentation (tax records, invoices, sales ledger receipts) is maintained at our farm headquarters and will be retained for as long as necessary to support our farm's status, and no less than 2 years, in accordance with 21 CFR § 112.164. These records will be made readily available to FDA or State of <span id="p-inspection-state">Maine</span> officials for inspection and copying upon request in accordance with 21 CFR § 112.166; any records stored offsite will be retrieved and provided within 24 hours of request per 21 CFR § 112.162(a).</p>
       </div>
 
       <div class="letter-signature-grid">
@@ -544,7 +546,7 @@
 
       <div class="letter-footer">
         <p>This verification document was generated in accordance with the FDA FSMA Produce Safety Rule (21 CFR Part 112) guidelines. The inflation-adjusted values shown are derived from the official FDA database using Gross Domestic Product (GDP) Implicit Price Deflators.</p>
-        <p class="pft-tag">Practical Farm Tools Exemption Certification Service | fma-exempt-v1.0</p>
+        <p class="pft-tag">Practical Farm Tools Exemption Certification Service | fsma-exempt-v2.0 (2026 Season)</p>
       </div>
     </div>
   </div>

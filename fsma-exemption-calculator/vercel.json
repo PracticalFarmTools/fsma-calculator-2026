@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "fsma-exemption-calculator",
+  "name": "fsma-calculator-2026",
   "cleanUrls": true,
   "headers": [
     {
@@ -9,6 +9,24 @@
         {
           "key": "Cache-Control",
           "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/thresholds.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(icon-192.png|icon-512.png)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
         }
       ]
     }

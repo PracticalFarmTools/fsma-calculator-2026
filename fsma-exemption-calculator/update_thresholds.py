@@ -70,44 +70,14 @@ def parse_average_range(header_str):
         return int(years[-2]), int(years[-1])
     return None
 
-def check_and_copy_icons():
-    dir_path = os.path.dirname(__file__)
-    icon_192 = os.path.join(dir_path, "icon-192.png")
-    icon_512 = os.path.join(dir_path, "icon-512.png")
-
-    # Look for source icon.png
-    src_icon = os.path.abspath(os.path.join(dir_path, "..", "client-mobile-app", "assets", "images", "icon.png"))
-    if not os.path.exists(src_icon):
-        # Try alternate path
-        src_icon = os.path.abspath(os.path.join(dir_path, "client-mobile-app", "assets", "images", "icon.png"))
-    
-    if os.path.exists(src_icon):
-        print(f"Found source icon at {src_icon}. Copying/generating PWA icons...")
-        try:
-            from PIL import Image
-            img = Image.open(src_icon)
-            
-            # Resize and save
-            img.resize((192, 192), Image.Resampling.LANCZOS).save(icon_192, "PNG")
-            img.resize((512, 512), Image.Resampling.LANCZOS).save(icon_512, "PNG")
-            print("Successfully generated resized 192x192 and 512x512 icons using PIL.")
-        except Exception as e:
-            print(f"Could not use PIL for resizing ({e}). Copying original icon file directly as fallback.")
-            import shutil
-            shutil.copy(src_icon, icon_192)
-            shutil.copy(src_icon, icon_512)
-            print("Successfully copied fallback icons.")
-    else:
-        print(f"Source icon not found at {src_icon}. Cannot generate PWA icons.")
-
 def run_scraper():
-    check_and_copy_icons()
     print(f"[{datetime.now().isoformat()}] Starting FSMA Threshold Scraper...")
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
     
     try:
-        # Create unverified SSL context to bypass self-signed certificate errors in local networks
-        context = ssl._create_unverified_context()
+        # Verified SSL context: never disable certificate checks when scraping
+        # regulatory data, since a tampered response would corrupt thresholds.
+        context = ssl.create_default_context()
         req = urllib.request.Request(FDA_URL, headers=headers)
         with urllib.request.urlopen(req, context=context, timeout=15) as response:
             html_content = response.read().decode('utf-8')
@@ -120,6 +90,11 @@ def run_scraper():
         produce_table = None
         food_table = None
         
+        # NOTE: The FDA page contains several tables with a $500,000 baseline
+        # (Preventive Controls "qualified facility" and Produce Safety Rule
+        # § 112.5 use identical inflation-adjusted values, both derived from the
+        # same GDP deflator). We take the FIRST $500k table on the page. If FDA
+        # ever publishes diverging $500k tables, this selection must be revisited.
         for table in parser.tables:
             if len(table) < 2:
                 continue
@@ -128,7 +103,6 @@ def run_scraper():
             if "$25,000" in first_col_val:
                 produce_table = table
             elif "$500,000" in first_col_val and food_table is None:
-                # Use the first table found with $500,000 baseline (Preventive Controls / PSR match)
                 food_table = table
 
         if not produce_table or not food_table:

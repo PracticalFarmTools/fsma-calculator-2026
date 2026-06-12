@@ -320,6 +320,11 @@ body {
   pointer-events: none;
 }
 
+/* Any input behind a $ prefix needs room so the symbol never overlaps the number */
+.input-wrapper-prefix input {
+  padding-left: 1.6rem;
+}
+
 .sales-input-row input {
   width: 100%;
   padding: 0.75rem 0.5rem 0.75rem 1.6rem;
