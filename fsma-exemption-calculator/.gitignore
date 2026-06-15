@@ -1,1 +1,4 @@
 .vercel
+thresholds.bak.json
+__pycache__/
+*.pyc

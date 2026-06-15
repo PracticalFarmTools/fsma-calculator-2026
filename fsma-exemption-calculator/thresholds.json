@@ -9,15 +9,6 @@
         2024,
         2025
       ]
-    },
-    "2025": {
-      "produce_threshold": 33326,
-      "total_food_threshold": 666515,
-      "years_used": [
-        2022,
-        2023,
-        2024
-      ]
     }
   },
   "yearly_values": {

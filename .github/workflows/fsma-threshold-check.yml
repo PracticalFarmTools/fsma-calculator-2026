@@ -1,0 +1,31 @@
+# Compare thresholds.json against the live FDA cut-offs page.
+# Fails (exit 2) when the FDA has published new figures so you know to refresh.
+#
+# Runs every Monday year-round; increase frequency in spring if desired.
+# You can also trigger manually from the Actions tab (workflow_dispatch).
+
+name: FSMA Threshold Check
+
+on:
+  schedule:
+    - cron: '0 14 * * 1'
+  workflow_dispatch:
+
+jobs:
+  check-thresholds:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: fsma-exemption-calculator
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compare FDA thresholds (dry run)
+        run: python update_thresholds.py --dry-run

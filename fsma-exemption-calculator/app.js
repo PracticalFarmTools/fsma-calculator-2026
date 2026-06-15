@@ -8,48 +8,209 @@ const FALLBACK_THRESHOLDS = {
       "produce_threshold": 34324,
       "total_food_threshold": 686476,
       "years_used": [2023, 2024, 2025]
-    },
-    "2025": {
-      "produce_threshold": 33326,
-      "total_food_threshold": 666515,
-      "years_used": [2022, 2023, 2024]
     }
   }
 };
 
 let activeThresholds = FALLBACK_THRESHOLDS;
 
-// Register Service Worker for PWA Offline support
+// Format an ISO date (YYYY-MM-DD) as "June 10, 2026" without timezone drift
+function formatLongDate(iso) {
+  if (!iso) return '';
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+  if (!m) return String(iso);
+  const months = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+  return `${months[parseInt(m[2], 10) - 1]} ${parseInt(m[3], 10)}, ${m[1]}`;
+}
+
+// --- Numeric input helpers (inputs may contain thousands separators) ---
+
+// Numeric value of an input, ignoring commas; returns 0 for blank/invalid
+function parseNum(el) {
+  if (!el) return 0;
+  const n = parseFloat(String(el.value).replace(/,/g, '').trim());
+  return isNaN(n) ? 0 : n;
+}
+
+// Raw, comma-free string of an input (for "is this blank?" checks)
+function rawVal(el) {
+  return el ? String(el.value).replace(/,/g, '').trim() : '';
+}
+
+// Add thousands separators to a numeric-ish string, preserving a decimal part
+function formatWithCommas(value) {
+  const cleaned = String(value).replace(/[^\d.]/g, '');
+  if (cleaned === '') return '';
+  const parts = cleaned.split('.');
+  let intPart = parts[0].replace(/^0+(?=\d)/, '');
+  if (intPart === '') intPart = '0';
+  intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.length > 1 ? `${intPart}.${parts.slice(1).join('')}` : intPart;
+}
+
+// Display a stored value (number or "") as a comma-formatted string
+function formatStoredNumber(v) {
+  return (v === undefined || v === null || v === '') ? '' : formatWithCommas(String(v));
+}
+
+// Reformat an input live while typing, keeping the caret in a sensible spot
+function formatLiveThousands(el) {
+  const before = el.value;
+  const caret = el.selectionStart;
+  const digitsLeft = before.slice(0, caret).replace(/[^\d]/g, '').length;
+  const formatted = formatWithCommas(before);
+  if (formatted === before) return;
+  el.value = formatted;
+  let pos = 0, seen = 0;
+  while (pos < formatted.length && seen < digitsLeft) {
+    if (/\d/.test(formatted[pos])) seen++;
+    pos++;
+  }
+  try { el.setSelectionRange(pos, pos); } catch (e) { /* non-text input */ }
+}
+
+// Set true only when the user clicks Refresh on the update toast, so the first
+// install (clients.claim) never triggers an automatic page reload.
+let pendingUpdateReload = false;
+
+// Register Service Worker for PWA Offline support, with a controlled update prompt
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js')
-      .then((reg) => console.log('[Service Worker] Registered successfully:', reg.scope))
+      .then((reg) => {
+        // A new version was already downloaded and is waiting to take over
+        if (reg.waiting && navigator.serviceWorker.controller) {
+          showUpdateToast(reg);
+        }
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          if (!newWorker) return;
+          newWorker.addEventListener('statechange', () => {
+            // Only prompt when this is an UPDATE (a controller already exists),
+            // not on the very first install
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdateToast(reg);
+            }
+          });
+        });
+      })
       .catch((err) => console.error('[Service Worker] Registration failed:', err));
+
+    let reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!pendingUpdateReload) return;
+      if (reloading) return;
+      reloading = true;
+      window.location.reload();
+    });
   });
 }
 
-// State management
-let state = {
-  farmName: "",
-  farmAddress: "",
-  farmState: "ME",
-  stateManuallySet: false,
-  contactName: "",
-  contactPhone: "",
-  contactEmail: "",
-  assessmentYear: "2026",
-  sales: {
-    // We map keys by relative index 0, 1, 2 for the three preceding years
-    produce: [0, 0, 0],
-    food: [0, 0, 0],
-    local: [0, 0, 0]
-  },
-  projections: {
-    produce: "",
-    food: "",
-    local: ""
-  }
+// Small, dismissible toast telling the user a new version is ready
+function showUpdateToast(reg) {
+  if (document.getElementById('update-toast')) return;
+  const toast = document.createElement('div');
+  toast.id = 'update-toast';
+  toast.className = 'update-toast';
+  toast.setAttribute('role', 'status');
+
+  const msg = document.createElement('span');
+  msg.textContent = 'A new version is available.';
+  toast.appendChild(msg);
+
+  const refreshBtn = document.createElement('button');
+  refreshBtn.type = 'button';
+  refreshBtn.className = 'update-toast-btn';
+  refreshBtn.textContent = 'Refresh';
+  refreshBtn.addEventListener('click', () => {
+    pendingUpdateReload = true;
+    if (reg.waiting) {
+      reg.waiting.postMessage('SKIP_WAITING');
+    } else {
+      window.location.reload();
+    }
+  });
+  toast.appendChild(refreshBtn);
+
+  const dismissBtn = document.createElement('button');
+  dismissBtn.type = 'button';
+  dismissBtn.className = 'update-toast-dismiss';
+  dismissBtn.setAttribute('aria-label', 'Dismiss update notice');
+  dismissBtn.textContent = '✕';
+  dismissBtn.addEventListener('click', () => toast.remove());
+  toast.appendChild(dismissBtn);
+
+  document.body.appendChild(toast);
+}
+
+// Bump this whenever the saved-state shape changes in an incompatible way.
+const STATE_VERSION = 2;
+const STORAGE_KEY = 'fsma_calculator_state';
+
+// Farm jurisdiction labels for the declaration and inspection references in the
+// printed record. States use "State of …"; DC and territories use accurate titles.
+function stateJurisdiction(name) {
+  return { name, declaration: `the State of ${name}`, inspection: `State of ${name}` };
+}
+
+const JURISDICTIONS = {
+  AL: stateJurisdiction('Alabama'), AK: stateJurisdiction('Alaska'), AZ: stateJurisdiction('Arizona'),
+  AR: stateJurisdiction('Arkansas'), CA: stateJurisdiction('California'), CO: stateJurisdiction('Colorado'),
+  CT: stateJurisdiction('Connecticut'), DE: stateJurisdiction('Delaware'),
+  DC: { name: 'District of Columbia', declaration: 'the District of Columbia', inspection: 'District of Columbia' },
+  FL: stateJurisdiction('Florida'), GA: stateJurisdiction('Georgia'),
+  GU: { name: 'Guam', declaration: 'Guam', inspection: 'Government of Guam' },
+  HI: stateJurisdiction('Hawaii'), ID: stateJurisdiction('Idaho'), IL: stateJurisdiction('Illinois'),
+  IN: stateJurisdiction('Indiana'), IA: stateJurisdiction('Iowa'), KS: stateJurisdiction('Kansas'),
+  KY: stateJurisdiction('Kentucky'), LA: stateJurisdiction('Louisiana'), ME: stateJurisdiction('Maine'),
+  MD: stateJurisdiction('Maryland'), MA: stateJurisdiction('Massachusetts'), MI: stateJurisdiction('Michigan'),
+  MN: stateJurisdiction('Minnesota'), MS: stateJurisdiction('Mississippi'), MO: stateJurisdiction('Missouri'),
+  MT: stateJurisdiction('Montana'), NE: stateJurisdiction('Nebraska'), NV: stateJurisdiction('Nevada'),
+  NH: stateJurisdiction('New Hampshire'), NJ: stateJurisdiction('New Jersey'), NM: stateJurisdiction('New Mexico'),
+  NY: stateJurisdiction('New York'), NC: stateJurisdiction('North Carolina'), ND: stateJurisdiction('North Dakota'),
+  OH: stateJurisdiction('Ohio'), OK: stateJurisdiction('Oklahoma'), OR: stateJurisdiction('Oregon'),
+  PA: stateJurisdiction('Pennsylvania'),
+  PR: { name: 'Puerto Rico', declaration: 'the Commonwealth of Puerto Rico', inspection: 'Commonwealth of Puerto Rico' },
+  RI: stateJurisdiction('Rhode Island'), SC: stateJurisdiction('South Carolina'), SD: stateJurisdiction('South Dakota'),
+  TN: stateJurisdiction('Tennessee'), TX: stateJurisdiction('Texas'), UT: stateJurisdiction('Utah'),
+  VI: { name: 'U.S. Virgin Islands', declaration: 'the U.S. Virgin Islands', inspection: 'U.S. Virgin Islands' },
+  VT: stateJurisdiction('Vermont'), VA: stateJurisdiction('Virginia'), WA: stateJurisdiction('Washington'),
+  WV: stateJurisdiction('West Virginia'), WI: stateJurisdiction('Wisconsin'), WY: stateJurisdiction('Wyoming')
 };
+
+function jurisdictionFor(code) {
+  return JURISDICTIONS[code] || { name: code, declaration: code, inspection: code };
+}
+
+// Factory for a clean default state (lets us reset safely on bad/old data)
+function defaultState() {
+  return {
+    schemaVersion: STATE_VERSION,
+    farmName: "",
+    farmAddress: "",
+    farmState: "ME",
+    stateManuallySet: false,
+    contactName: "",
+    contactPhone: "",
+    contactEmail: "",
+    assessmentYear: "2026",
+    sales: {
+      // We map keys by relative index 0, 1, 2 for the three preceding years
+      produce: ["", "", ""],
+      food: ["", "", ""],
+      local: ["", "", ""]
+    },
+    projections: {
+      produce: "",
+      food: "",
+      local: ""
+    }
+  };
+}
+
+// State management
+let state = defaultState();
 
 // UI Elements
 const els = {
@@ -59,7 +220,8 @@ const els = {
   contactName: document.getElementById('contact-name'),
   contactPhone: document.getElementById('contact-phone'),
   contactEmail: document.getElementById('contact-email'),
-  assessmentYear: document.getElementById('assessment-year'),
+  assessmentYearLabel: document.getElementById('assessment-year-label'),
+  assessmentYearSub: document.getElementById('assessment-year-sub'),
   
   // Year Labels
   rowYear0: document.getElementById('row-year-0'),
@@ -123,6 +285,9 @@ const els = {
   pBannerDesc: document.getElementById('p-banner-desc'),
   pRegulatoryCitation: document.getElementById('p-regulatory-citation'),
   pLetterTitle: document.getElementById('p-letter-title'),
+  pLetterFarmName: document.getElementById('p-letter-farm-name'),
+  pClaimStatement: document.getElementById('p-claim-statement'),
+  pSigPrintedName: document.getElementById('p-sig-printed-name'),
   
   // Letter Table cells
   pYearLabels: [
@@ -161,7 +326,7 @@ const els = {
 // Initialize App
 async function init() {
   await loadThresholds();
-  populateYearOptions();
+  applyAssessmentYear();
   setupNetworkMonitoring();
   loadSavedState();
   updateYearsAndLimits();
@@ -175,7 +340,6 @@ async function loadThresholds() {
     const res = await fetch('thresholds.json');
     if (res.ok) {
       activeThresholds = await res.json();
-      console.log('Successfully loaded thresholds database:', activeThresholds);
       els.syncBadge.innerText = `Updated ${activeThresholds.last_updated || 'recently'}`;
     } else {
       console.warn('thresholds.json returned status', res.status, '- using offline fallback data.');
@@ -189,33 +353,35 @@ async function loadThresholds() {
   }
 }
 
-// Build the assessment-year dropdown from the loaded thresholds (newest first)
-function populateYearOptions() {
+// Return the newest claimable assessment year from the loaded thresholds
+function newestAssessmentYear() {
   const years = Object.keys(activeThresholds.assessment_years || {}).sort((a, b) => Number(b) - Number(a));
-  if (!years.length) return;
-  
-  els.assessmentYear.innerHTML = '';
-  years.forEach((yr) => {
-    const data = activeThresholds.assessment_years[yr];
-    const opt = document.createElement('option');
-    opt.value = yr;
-    opt.textContent = `${yr} (Uses ${data.years_used[0]} - ${data.years_used[2]} records)`;
-    els.assessmentYear.appendChild(opt);
-  });
-  
-  // Default to the newest assessment year; loadSavedState may override this
-  els.assessmentYear.value = years[0];
-  state.assessmentYear = years[0];
+  return years[0] || state.assessmentYear;
+}
+
+// Lock the calculator to the newest claimable year and render the static label.
+// Only one year is offered at a time, so no dropdown is needed.
+function applyAssessmentYear() {
+  const newest = newestAssessmentYear();
+  if (!newest) return;
+  state.assessmentYear = newest;
+  const data = activeThresholds.assessment_years[newest];
+  if (els.assessmentYearLabel) els.assessmentYearLabel.innerText = newest;
+  if (els.assessmentYearSub && data) {
+    els.assessmentYearSub.innerText = `Uses ${data.years_used[0]} – ${data.years_used[2]} sales records`;
+  }
 }
 
 // Set up online/offline event listeners
 function setupNetworkMonitoring() {
   const updateStatus = () => {
+    els.offlineBadge.style.display = 'inline-flex';
     if (navigator.onLine) {
-      els.offlineBadge.style.display = 'none';
+      els.offlineBadge.innerText = '📡 Offline Ready';
+      els.offlineBadge.classList.remove('offline-mode-active');
     } else {
-      els.offlineBadge.style.display = 'inline-flex';
       els.offlineBadge.innerText = '📡 Offline Mode';
+      els.offlineBadge.classList.add('offline-mode-active');
     }
   };
   window.addEventListener('online', updateStatus);
@@ -223,63 +389,97 @@ function setupNetworkMonitoring() {
   updateStatus();
 }
 
+// Normalize a stored sales figure: blank stays blank, valid numbers are coerced.
+function sanitizeSalesValue(v) {
+  if (v === undefined || v === null || v === '') return '';
+  if (typeof v === 'number' && !isNaN(v)) return v;
+  if (typeof v === 'string') {
+    const trimmed = v.replace(/,/g, '').trim();
+    if (trimmed === '') return '';
+    const n = parseFloat(trimmed);
+    return isNaN(n) ? '' : n;
+  }
+  return '';
+}
+
+// Build a clean, validated state from whatever was stored, ignoring unknown or
+// malformed fields so an old/corrupt save can never crash or corrupt the app.
+function migrateState(parsed) {
+  const fresh = defaultState();
+  if (!parsed || typeof parsed !== 'object') return fresh;
+
+  const strFields = ['farmName', 'farmAddress', 'contactName', 'contactPhone', 'contactEmail'];
+  strFields.forEach((k) => { if (typeof parsed[k] === 'string') fresh[k] = parsed[k]; });
+  if (typeof parsed.farmState === 'string' && JURISDICTIONS[parsed.farmState]) {
+    fresh.farmState = parsed.farmState;
+  }
+  if (typeof parsed.stateManuallySet === 'boolean') fresh.stateManuallySet = parsed.stateManuallySet;
+
+  const copyTriple = (src, dest) => {
+    if (!Array.isArray(src)) return;
+    for (let i = 0; i < 3; i++) {
+      dest[i] = sanitizeSalesValue(src[i]);
+    }
+  };
+  if (parsed.sales && typeof parsed.sales === 'object') {
+    copyTriple(parsed.sales.produce, fresh.sales.produce);
+    copyTriple(parsed.sales.food, fresh.sales.food);
+    copyTriple(parsed.sales.local, fresh.sales.local);
+  }
+  if (parsed.projections && typeof parsed.projections === 'object') {
+    ['produce', 'food', 'local'].forEach((k) => {
+      fresh.projections[k] = sanitizeSalesValue(parsed.projections[k]);
+    });
+  }
+  fresh.schemaVersion = STATE_VERSION;
+  return fresh;
+}
+
 // Load state from LocalStorage
 function loadSavedState() {
+  let parsed;
   try {
-    const saved = localStorage.getItem('fsma_calculator_state');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // Ensure structure is correct
-      if (parsed.sales && parsed.sales.produce) {
-        state = parsed;
-        if (!state.projections) {
-          state.projections = { produce: "", food: "", local: "" };
-        }
-        if (state.stateManuallySet === undefined) {
-          state.stateManuallySet = false;
-        }
-        
-        // Populate inputs
-        els.farmName.value = state.farmName || "";
-        els.farmAddress.value = state.farmAddress || "";
-        els.farmState.value = state.farmState || "ME";
-        els.contactName.value = state.contactName || "";
-        els.contactPhone.value = state.contactPhone || "";
-        els.contactEmail.value = state.contactEmail || "";
-        
-        // Restore saved assessment year only if it still exists in the dropdown;
-        // otherwise fall back to the newest available year
-        if (state.assessmentYear && els.assessmentYear.querySelector(`option[value="${state.assessmentYear}"]`)) {
-          els.assessmentYear.value = state.assessmentYear;
-        } else {
-          state.assessmentYear = els.assessmentYear.value;
-        }
-        
-        for (let i = 0; i < 3; i++) {
-          els.produceInputs[i].value = (state.sales.produce[i] !== undefined && state.sales.produce[i] !== null && state.sales.produce[i] !== "") ? state.sales.produce[i] : "";
-          els.foodInputs[i].value = (state.sales.food[i] !== undefined && state.sales.food[i] !== null && state.sales.food[i] !== "") ? state.sales.food[i] : "";
-          els.localInputs[i].value = (state.sales.local[i] !== undefined && state.sales.local[i] !== null && state.sales.local[i] !== "") ? state.sales.local[i] : "";
-        }
-        
-        if (state.projections) {
-          const pProj = document.getElementById('proj-produce');
-          const fProj = document.getElementById('proj-food');
-          const lProj = document.getElementById('proj-local');
-          if (pProj) pProj.value = (state.projections.produce !== undefined && state.projections.produce !== null && state.projections.produce !== "") ? state.projections.produce : "";
-          if (fProj) fProj.value = (state.projections.food !== undefined && state.projections.food !== null && state.projections.food !== "") ? state.projections.food : "";
-          if (lProj) lProj.value = (state.projections.local !== undefined && state.projections.local !== null && state.projections.local !== "") ? state.projections.local : "";
-        }
-      }
-    }
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+    parsed = JSON.parse(saved);
   } catch (e) {
-    console.error('Failed to load local state:', e);
+    console.error('Could not read saved data; starting fresh.', e);
+    return;
   }
+
+  state = migrateState(parsed);
+
+  // Populate text inputs
+  els.farmName.value = state.farmName || "";
+  els.farmAddress.value = state.farmAddress || "";
+  els.farmState.value = state.farmState || "ME";
+  els.contactName.value = state.contactName || "";
+  els.contactPhone.value = state.contactPhone || "";
+  els.contactEmail.value = state.contactEmail || "";
+
+  // Only the newest year is claimable; ignore any stale saved year (e.g. an old 2025)
+  state.assessmentYear = newestAssessmentYear();
+  applyAssessmentYear();
+
+  for (let i = 0; i < 3; i++) {
+    els.produceInputs[i].value = formatStoredNumber(state.sales.produce[i]);
+    els.foodInputs[i].value = formatStoredNumber(state.sales.food[i]);
+    els.localInputs[i].value = formatStoredNumber(state.sales.local[i]);
+  }
+
+  const pProj = document.getElementById('proj-produce');
+  const fProj = document.getElementById('proj-food');
+  const lProj = document.getElementById('proj-local');
+  if (pProj) pProj.value = formatStoredNumber(state.projections.produce);
+  if (fProj) fProj.value = formatStoredNumber(state.projections.food);
+  if (lProj) lProj.value = formatStoredNumber(state.projections.local);
 }
 
 // Save state to LocalStorage
 function saveState() {
   try {
-    localStorage.setItem('fsma_calculator_state', JSON.stringify(state));
+    state.schemaVersion = STATE_VERSION;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (e) {
     console.error('Failed to save state:', e);
   }
@@ -300,12 +500,23 @@ function updateYearsAndLimits() {
   
   // Update print placeholders
   els.pAssessmentYear.innerText = state.assessmentYear;
-  els.pThresholdUpdate.innerText = activeThresholds.last_updated || '2026-06-10';
+  els.pThresholdUpdate.innerText = formatLongDate(activeThresholds.last_updated) || '—';
   els.pThresholdProduce.innerText = `$${yearData.produce_threshold.toLocaleString()}`;
   els.pThresholdFood.innerText = `$${yearData.total_food_threshold.toLocaleString()}`;
   for (let i = 0; i < 3; i++) {
     els.pYearLabels[i].innerText = years[i];
   }
+
+  // Keep each sales input's accessible name year-specific (screen readers would
+  // otherwise hear three identically-labeled "Gross Produce Sales" fields).
+  const setYearAria = (inputs, label) => {
+    for (let i = 0; i < 3; i++) {
+      if (inputs[i]) inputs[i].setAttribute('aria-label', `${label} for ${years[i]}`);
+    }
+  };
+  setYearAria(els.produceInputs, 'Gross Produce Sales');
+  setYearAria(els.foodInputs, 'Total Food Sales');
+  setYearAria(els.localInputs, 'Qualified End-User Sales');
   
   // Update projection labels dynamically
   const assessmentYearNum = parseInt(state.assessmentYear);
@@ -332,6 +543,11 @@ function updateYearsAndLimits() {
   if (helperFood) helperFood.innerText = yearData.total_food_threshold.toLocaleString();
   if (helperYearProduce) helperYearProduce.innerText = state.assessmentYear;
   if (helperYearFood) helperYearFood.innerText = state.assessmentYear;
+
+  const helperNotProduce = document.getElementById('helper-not-produce-threshold');
+  const helperNotFood = document.getElementById('helper-not-food-threshold');
+  if (helperNotProduce) helperNotProduce.innerText = yearData.produce_threshold.toLocaleString();
+  if (helperNotFood) helperNotFood.innerText = yearData.total_food_threshold.toLocaleString();
 }// Helper to reset results when entries fail validation checks
 function resetResultsForValidation() {
   els.avgProduce.innerText = "--";
@@ -349,19 +565,24 @@ function resetResultsForValidation() {
   }
 }
 
-// Auto-detect the farm state from the address field (e.g. "... Nobleboro, ME 04555").
+// Auto-detect the farm state from the address field (e.g. "... Anytown, ME 04000").
 // Only runs while the user types in the address field, and never overrides a state
 // the user has explicitly chosen from the dropdown.
 function autoDetectStateFromAddress() {
   if (state.stateManuallySet) return;
   const addressVal = els.farmAddress.value || "";
-  const stateMatch = addressVal.match(/\b([A-Z]{2})\b(?:\s+\d{5}(?:-\d{4})?)?\s*$/i);
-  if (stateMatch) {
-    const code = stateMatch[1].toUpperCase();
-    if (els.farmState.querySelector(`option[value="${code}"]`) && els.farmState.value !== code) {
-      els.farmState.value = code;
-      state.farmState = code;
-    }
+  let code = null;
+
+  if (/\b(DC|District of Columbia)\b/i.test(addressVal)) {
+    code = 'DC';
+  } else {
+    const stateMatch = addressVal.match(/\b([A-Z]{2})\b(?:\s+\d{5}(?:-\d{4})?)?\s*$/i);
+    if (stateMatch) code = stateMatch[1].toUpperCase();
+  }
+
+  if (code && JURISDICTIONS[code] && els.farmState.value !== code) {
+    els.farmState.value = code;
+    state.farmState = code;
   }
 }
 
@@ -370,32 +591,20 @@ function calculateExemption() {
   const yearData = activeThresholds.assessment_years[state.assessmentYear];
   if (!yearData) return;
 
-  // Calculate averages
-  let sumProduce = 0, sumFood = 0, sumLocal = 0;
-  let hasInputs = false;
-  
+  // Persist exactly what the farmer typed: a parsed number per filled field, or
+  // "" for a blank (not-in-business) year. calc.js turns this into the average.
   for (let i = 0; i < 3; i++) {
-    const pVal = parseFloat(els.produceInputs[i].value) || 0;
-    const fVal = parseFloat(els.foodInputs[i].value) || 0;
-    const lVal = parseFloat(els.localInputs[i].value) || 0;
-    
-    // Save to state
-    state.sales.produce[i] = els.produceInputs[i].value ? pVal : "";
-    state.sales.food[i] = els.foodInputs[i].value ? fVal : "";
-    state.sales.local[i] = els.localInputs[i].value ? lVal : "";
-    
-    sumProduce += pVal;
-    sumFood += fVal;
-    sumLocal += lVal;
-    
-    if (els.produceInputs[i].value || els.foodInputs[i].value || els.localInputs[i].value) {
-      hasInputs = true;
-    }
+    state.sales.produce[i] = rawVal(els.produceInputs[i]) !== "" ? parseNum(els.produceInputs[i]) : "";
+    state.sales.food[i] = rawVal(els.foodInputs[i]) !== "" ? parseNum(els.foodInputs[i]) : "";
+    state.sales.local[i] = rawVal(els.localInputs[i]) !== "" ? parseNum(els.localInputs[i]) : "";
   }
-  
+
   saveState();
-  
-  if (!hasInputs) {
+
+  // Single source of truth for the 3-year averaging + exemption decision (calc.js).
+  const calc = FSMACalc.computeExemption(state.sales, yearData);
+
+  if (!calc.hasInputs) {
     resetResults();
     return;
   }
@@ -404,9 +613,9 @@ function calculateExemption() {
   let warningMsg = "";
   for (let i = 0; i < 3; i++) {
     const yr = yearData.years_used[i];
-    const pVal = parseFloat(els.produceInputs[i].value) || 0;
-    const fVal = parseFloat(els.foodInputs[i].value) || 0;
-    const lVal = parseFloat(els.localInputs[i].value) || 0;
+    const pVal = parseNum(els.produceInputs[i]);
+    const fVal = parseNum(els.foodInputs[i]);
+    const lVal = parseNum(els.localInputs[i]);
     
     if (pVal < 0 || fVal < 0 || lVal < 0) {
       warningMsg = `In ${yr}, sales values cannot be negative. Please enter $0 or greater.`;
@@ -433,26 +642,12 @@ function calculateExemption() {
     warningEl.classList.add('hidden');
   }
 
-  // Count the number of active years with data to use as correct denominator
-  let activeYearsCount = 0;
-  for (let i = 0; i < 3; i++) {
-    const hasProduce = els.produceInputs[i].value.trim() !== "";
-    const hasFood = els.foodInputs[i].value.trim() !== "";
-    const hasLocal = els.localInputs[i].value.trim() !== "";
-    if (hasProduce || hasFood || hasLocal) {
-      activeYearsCount++;
-    }
-  }
-  const denominator = activeYearsCount || 1;
-
-  const exactAvgProduce = sumProduce / denominator;
-  const exactAvgFood = sumFood / denominator;
-  const exactAvgLocal = sumLocal / denominator;
-
-  const avgProduce = Math.round(exactAvgProduce);
-  const avgFood = Math.round(exactAvgFood);
-  const avgLocal = Math.round(exactAvgLocal);
-  const localPct = avgFood > 0 ? Math.round((avgLocal / avgFood) * 100) : 0;
+  // Pull the rolling-average figures from the shared calculation (calc.js).
+  const exactAvgFood = calc.exactAvgFood;
+  const avgProduce = calc.avgProduce;
+  const avgFood = calc.avgFood;
+  const avgLocal = calc.avgLocal;
+  const localPct = calc.localPctDisplay;
   
   // Update averages displays
   els.avgProduce.innerText = `$${avgProduce.toLocaleString()}`;
@@ -469,7 +664,7 @@ function calculateExemption() {
   
   // Scenario 1: De Minimis (Fully Exempt)
   // § 112.4(a): Average annual value of produce sold does not exceed $25,000 (adjusted for inflation)
-  if (exactAvgProduce <= yearData.produce_threshold) {
+  if (calc.status === "exempt") {
     status = "exempt";
     badgeText = `Fully Exempt (Produce Sales ≤ $${yearData.produce_threshold.toLocaleString()})`;
     badgeClass = "status-exempt";
@@ -479,7 +674,7 @@ function calculateExemption() {
   }
   // Scenario 2: Qualified Exemption (Partially Exempt)
   // § 112.5: Average annual food sales are less than $500,000 (adjusted for inflation) AND the majority (>50%) is sold to qualified end-users.
-  else if (exactAvgFood < yearData.total_food_threshold && sumLocal > (sumFood * 0.5)) {
+  else if (calc.status === "qualified") {
     status = "qualified";
     badgeText = "Partially Exempt (Qualified Local Farm)";
     badgeClass = "status-qualified";
@@ -563,33 +758,33 @@ function calculateExemption() {
   }
   
   // Update print sheet values
+  if (els.pLetterFarmName) {
+    els.pLetterFarmName.innerText = (els.farmName.value.trim() || "Your Farm").toUpperCase();
+  }
   els.pFarmName.innerText = els.farmName.value || "--";
   els.pFarmAddress.innerText = els.farmAddress.value || "--";
   els.pContactName.innerText = els.contactName.value || "--";
   els.pContactPhone.innerText = els.contactPhone.value || "--";
   els.pContactEmail.innerText = els.contactEmail.value || "--";
   els.pCalcDate.innerText = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  // Explicit, plain-language statement of exactly what the farm is claiming
+  let claimText = "";
+  if (status === "exempt") {
+    claimText = `This farm asserts that it is NOT COVERED by the FSMA Produce Safety Rule under 21 CFR § 112.4(a) for the ${state.assessmentYear} coverage year.`;
+  } else if (status === "qualified") {
+    claimText = `This farm claims a QUALIFIED EXEMPTION from the full FSMA Produce Safety Rule under 21 CFR § 112.5 for the ${state.assessmentYear} coverage year.`;
+  } else if (status === "not_exempt") {
+    claimText = `Based on the figures below, this farm is FULLY COVERED by the FSMA Produce Safety Rule (21 CFR Part 112) for the ${state.assessmentYear} coverage year.`;
+  }
+  if (els.pClaimStatement) els.pClaimStatement.innerText = claimText;
+  if (els.pSigPrintedName) els.pSigPrintedName.innerText = els.contactName.value.trim() || "";
   
-  // Update state-specific declarations in compliance printout
-  const STATE_NAMES = {
-    "AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California",
-    "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware", "FL": "Florida", "GA": "Georgia",
-    "HI": "Hawaii", "ID": "Idaho", "IL": "Illinois", "IN": "Indiana", "IA": "Iowa",
-    "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland",
-    "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi", "MO": "Missouri",
-    "MT": "Montana", "NE": "Nebraska", "NV": "Nevada", "NH": "New Hampshire", "NJ": "New Jersey",
-    "NM": "New Mexico", "NY": "New York", "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio",
-    "OK": "Oklahoma", "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina",
-    "SD": "South Dakota", "TN": "Tennessee", "TX": "Texas", "UT": "Utah", "VT": "Vermont",
-    "VA": "Virginia", "WA": "Washington", "WV": "West Virginia", "WI": "Wisconsin", "WY": "Wyoming"
-  };
   const selectedState = els.farmState.value || "ME";
-  const stateFullName = STATE_NAMES[selectedState] || selectedState;
-  
-  const pDecState = document.getElementById('p-declaration-state');
-  const pInspState = document.getElementById('p-inspection-state');
-  if (pDecState) pDecState.innerText = stateFullName;
-  if (pInspState) pInspState.innerText = stateFullName;
+  const jur = jurisdictionFor(selectedState);
+
+  const pInspJurisdiction = document.getElementById('p-inspection-jurisdiction');
+  if (pInspJurisdiction) pInspJurisdiction.innerText = jur.inspection;
 
   // Update document title dynamically in compliance printout
   let docTitle = "FSMA PRODUCE SAFETY RULE EXEMPTION RECORD";
@@ -645,22 +840,22 @@ function calculateProjection() {
   
   if (!pProjInput || !fProjInput || !lProjInput) return;
   
-  const pProj = parseFloat(pProjInput.value) || 0;
-  const fProj = parseFloat(fProjInput.value) || 0;
-  const lProj = parseFloat(lProjInput.value) || 0;
+  const pProj = parseNum(pProjInput);
+  const fProj = parseNum(fProjInput);
+  const lProj = parseNum(lProjInput);
   
   // Save to state
   state.projections = {
-    produce: pProjInput.value ? pProj : "",
-    food: fProjInput.value ? fProj : "",
-    local: lProjInput.value ? lProj : ""
+    produce: rawVal(pProjInput) !== "" ? pProj : "",
+    food: rawVal(fProjInput) !== "" ? fProj : "",
+    local: rawVal(lProjInput) !== "" ? lProj : ""
   };
   saveState();
   
   const projStatusBadge = document.getElementById('proj-status-badge');
   const projStatusExplanation = document.getElementById('proj-status-explanation');
   
-  const hasInputs = pProjInput.value.trim() !== "" || fProjInput.value.trim() !== "" || lProjInput.value.trim() !== "";
+  const hasInputs = rawVal(pProjInput) !== "" || rawVal(fProjInput) !== "" || rawVal(lProjInput) !== "";
   
   if (!hasInputs) {
     projStatusBadge.innerText = "Enter Projections";
@@ -689,40 +884,38 @@ function calculateProjection() {
     return;
   }
   
-  // Fetch historical values from Step 2 (Year 2 and Year 3)
-  const pYr2 = parseFloat(els.produceInputs[1].value) || 0;
-  const pYr3 = parseFloat(els.produceInputs[2].value) || 0;
-  
-  const fYr2 = parseFloat(els.foodInputs[1].value) || 0;
-  const fYr3 = parseFloat(els.foodInputs[2].value) || 0;
-  
-  const lYr2 = parseFloat(els.localInputs[1].value) || 0;
-  const lYr3 = parseFloat(els.localInputs[2].value) || 0;
-  
-  // Averages (3-year rolling including projected year)
-  const avgProduce = Math.round((pYr2 + pYr3 + pProj) / 3);
-  const avgFood = Math.round((fYr2 + fYr3 + fProj) / 3);
-  const avgLocal = Math.round((lYr2 + lYr3 + lProj) / 3);
-  const localPct = avgFood > 0 ? Math.round((avgLocal / avgFood) * 100) : 0;
-  
-  // Determine projected status
-  let status = "";
+  // Build next year's 3-year window from the two most recent historical years
+  // (Step 2's Year 2 & Year 3) plus the projected current year, preserving the
+  // blank-vs-zero distinction so a not-in-business year is excluded from the
+  // average — exactly like the official calculator.
+  const histOrBlank = (input) => rawVal(input) !== "" ? parseNum(input) : "";
+  const projSales = {
+    produce: [histOrBlank(els.produceInputs[1]), histOrBlank(els.produceInputs[2]), state.projections.produce],
+    food:    [histOrBlank(els.foodInputs[1]),    histOrBlank(els.foodInputs[2]),    state.projections.food],
+    local:   [histOrBlank(els.localInputs[1]),   histOrBlank(els.localInputs[2]),   state.projections.local]
+  };
+
+  // Same engine as the official determination (calc.js): identical averaging
+  // (active-years denominator) AND identical exempt/qualified decision, so the
+  // planner can never disagree with the real calculator.
+  const calc = FSMACalc.computeExemption(projSales, yearData);
+  const avgProduce = calc.avgProduce;
+  const avgFood = calc.avgFood;
+  const localPct = calc.localPctDisplay;
+  let status = calc.status;
   let badgeText = "";
   let badgeClass = "";
   let explanationText = "";
   
-  if (avgProduce <= yearData.produce_threshold) {
-    status = "exempt";
+  if (status === "exempt") {
     badgeText = "Projected Exempt";
     badgeClass = "status-exempt";
     explanationText = `Based on projections, your estimated rolling average produce sales ($${avgProduce.toLocaleString()}) remain below the $${yearData.produce_threshold.toLocaleString()} threshold. Your farm would remain <strong>Fully Exempt</strong> next year.`;
-  } else if (avgFood < yearData.total_food_threshold && (lYr2 + lYr3 + lProj) > ((fYr2 + fYr3 + fProj) * 0.5)) {
-    status = "qualified";
+  } else if (status === "qualified") {
     badgeText = "Projected Qualified Exempt";
     badgeClass = "status-qualified";
     explanationText = `Based on projections, your estimated rolling average total food sales ($${avgFood.toLocaleString()}) are below the $${yearData.total_food_threshold.toLocaleString()} threshold, and the majority (${localPct}%) would be sold directly to qualified end-users. Your farm would qualify for a <strong>Qualified Exemption</strong> next year.`;
   } else {
-    status = "not_exempt";
     badgeText = "Projected Not Exempt";
     badgeClass = "status-not-exempt";
     
@@ -742,7 +935,7 @@ function calculateProjection() {
 function resetResults() {
   els.avgProduce.innerText = "$0";
   els.avgFood.innerText = "$0";
-  els.avgLocalPercent.innerText = "0%";
+  els.avgLocalPercent.innerText = "0.0%";
   els.statusBadge.innerText = "Enter Sales Data";
   els.statusBadge.className = "status-badge status-undetermined";
   els.statusExplanation.innerText = "Fill in the sales numbers in Step 2 to calculate your FSMA Exemption status.";
@@ -753,6 +946,95 @@ function resetResults() {
     helperHintEl.innerHTML = "⚠️ Please enter your sales data in Step 2 to calculate your status.";
     helperHintEl.classList.remove('hidden');
   }
+}
+
+let modalReturnFocus = null;
+
+function openPreviewModal() {
+  const letterClone = document.getElementById('print-letter').cloneNode(true);
+  letterClone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+  els.modalLetterContent.replaceChildren(letterClone);
+  modalReturnFocus = document.activeElement;
+  els.previewModal.classList.remove('hidden');
+  els.previewModal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  els.btnModalClose.focus();
+}
+
+function closePreviewModal() {
+  els.previewModal.classList.add('hidden');
+  els.previewModal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  if (modalReturnFocus && typeof modalReturnFocus.focus === 'function') {
+    modalReturnFocus.focus();
+  }
+  modalReturnFocus = null;
+}
+
+function trapModalFocus(e) {
+  if (els.previewModal.classList.contains('hidden')) return;
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    closePreviewModal();
+    return;
+  }
+  if (e.key !== 'Tab') return;
+  const focusable = els.previewModal.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  );
+  const list = Array.from(focusable).filter((el) => !el.disabled && el.offsetParent !== null);
+  if (!list.length) return;
+  const first = list[0];
+  const last = list[list.length - 1];
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
+function clearSavedData() {
+  const confirmed = window.confirm(
+    'Clear all saved farm information and sales figures from this device? This cannot be undone.'
+  );
+  if (!confirmed) return;
+
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (e) {
+    console.error('Failed to clear saved data:', e);
+  }
+
+  state = defaultState();
+  applyAssessmentYear();
+
+  els.farmName.value = "";
+  els.farmAddress.value = "";
+  els.farmState.value = state.farmState;
+  els.contactName.value = "";
+  els.contactPhone.value = "";
+  els.contactEmail.value = "";
+
+  for (let i = 0; i < 3; i++) {
+    els.produceInputs[i].value = "";
+    els.foodInputs[i].value = "";
+    els.localInputs[i].value = "";
+  }
+
+  const pProj = document.getElementById('proj-produce');
+  const fProj = document.getElementById('proj-food');
+  const lProj = document.getElementById('proj-local');
+  if (pProj) pProj.value = "";
+  if (fProj) fProj.value = "";
+  if (lProj) lProj.value = "";
+
+  const warningEl = document.getElementById('validation-warning');
+  if (warningEl) warningEl.classList.add('hidden');
+
+  updateYearsAndLimits();
+  calculateExemption();
 }
 
 // Start app
@@ -777,17 +1059,11 @@ function setupEventListeners() {
     calculateExemption();
   });
   
-  // Year selector
-  els.assessmentYear.addEventListener('change', (e) => {
-    state.assessmentYear = e.target.value;
-    updateYearsAndLimits();
-    calculateExemption();
-  });
-  
-  // Numeric sales inputs
+  // Numeric sales inputs (format thousands live, then recalculate)
   const inputsList = [...els.produceInputs, ...els.foodInputs, ...els.localInputs];
   inputsList.forEach((input) => {
     input.addEventListener('input', () => {
+      formatLiveThousands(input);
       calculateExemption();
     });
   });
@@ -796,47 +1072,47 @@ function setupEventListeners() {
   const pProj = document.getElementById('proj-produce');
   const fProj = document.getElementById('proj-food');
   const lProj = document.getElementById('proj-local');
-  if (pProj) pProj.addEventListener('input', calculateProjection);
-  if (fProj) fProj.addEventListener('input', calculateProjection);
-  if (lProj) lProj.addEventListener('input', calculateProjection);
-  
-  // Projection collapsible trigger
-  const btnToggleProj = document.getElementById('btn-toggle-projection');
-  const projContent = document.getElementById('projection-content');
-  const projCard = document.getElementById('projection-planning-card');
-  if (btnToggleProj && projContent && projCard) {
-    btnToggleProj.addEventListener('click', () => {
-      const isHidden = projContent.classList.contains('hidden');
-      if (isHidden) {
-        projContent.classList.remove('hidden');
-        projCard.classList.add('expanded');
-        btnToggleProj.setAttribute('aria-expanded', 'true');
-        btnToggleProj.querySelector('.trigger-icon').innerText = '▲';
+  [pProj, fProj, lProj].forEach((input) => {
+    if (input) {
+      input.addEventListener('input', () => {
+        formatLiveThousands(input);
         calculateProjection();
-      } else {
-        projContent.classList.add('hidden');
-        projCard.classList.remove('expanded');
-        btnToggleProj.setAttribute('aria-expanded', 'false');
-        btnToggleProj.querySelector('.trigger-icon').innerText = '▼';
-      }
+      });
+    }
+  });
+  
+  // Generic collapsible-card toggle (trigger, content, card, optional onExpand)
+  const wireCollapsible = (triggerId, contentId, cardId, onExpand) => {
+    const trigger = document.getElementById(triggerId);
+    const content = document.getElementById(contentId);
+    const card = document.getElementById(cardId);
+    if (!trigger || !content || !card) return;
+    trigger.addEventListener('click', () => {
+      const isHidden = content.classList.contains('hidden');
+      content.classList.toggle('hidden', !isHidden);
+      card.classList.toggle('expanded', isHidden);
+      trigger.setAttribute('aria-expanded', String(isHidden));
+      const icon = trigger.querySelector('.trigger-icon');
+      if (icon) icon.innerText = isHidden ? '▲' : '▼';
+      if (isHidden && typeof onExpand === 'function') onExpand();
     });
-  }
+  };
+
+  wireCollapsible('btn-toggle-projection', 'projection-content', 'projection-planning-card', calculateProjection);
+  wireCollapsible('btn-toggle-criteria', 'criteria-content', 'criteria-card');
   
   // Print preview trigger
-  els.btnPrintPreview.addEventListener('click', () => {
-    // Clone the print letter and strip all IDs from the copy so the modal
-    // never creates duplicate IDs that could hijack getElementById updates
-    const letterClone = document.getElementById('print-letter').cloneNode(true);
-    letterClone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
-    els.modalLetterContent.innerHTML = letterClone.innerHTML;
-    els.previewModal.classList.remove('hidden');
-    document.body.style.overflow = 'hidden'; // Lock background scrolling
+  els.btnPrintPreview.addEventListener('click', openPreviewModal);
+
+  els.btnModalClose.addEventListener('click', closePreviewModal);
+
+  els.previewModal.addEventListener('keydown', trapModalFocus);
+  els.previewModal.addEventListener('click', (e) => {
+    if (e.target === els.previewModal) closePreviewModal();
   });
-  
-  els.btnModalClose.addEventListener('click', () => {
-    els.previewModal.classList.add('hidden');
-    document.body.style.overflow = '';
-  });
+
+  const btnClearData = document.getElementById('btn-clear-data');
+  if (btnClearData) btnClearData.addEventListener('click', clearSavedData);
   
   // Native print trigger
   els.btnPrint.addEventListener('click', () => {
