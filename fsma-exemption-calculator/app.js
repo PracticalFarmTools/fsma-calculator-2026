@@ -180,6 +180,7 @@ const JURISDICTIONS = {
 };
 
 function jurisdictionFor(code) {
+  if (!code) return { name: 'your state', declaration: 'your state', inspection: 'your state' };
   return JURISDICTIONS[code] || { name: code, declaration: code, inspection: code };
 }
 
@@ -189,7 +190,7 @@ function defaultState() {
     schemaVersion: STATE_VERSION,
     farmName: "",
     farmAddress: "",
-    farmState: "ME",
+    farmState: "",
     stateManuallySet: false,
     contactName: "",
     contactPhone: "",
@@ -452,7 +453,7 @@ function loadSavedState() {
   // Populate text inputs
   els.farmName.value = state.farmName || "";
   els.farmAddress.value = state.farmAddress || "";
-  els.farmState.value = state.farmState || "ME";
+  els.farmState.value = state.farmState || "";
   els.contactName.value = state.contactName || "";
   els.contactPhone.value = state.contactPhone || "";
   els.contactEmail.value = state.contactEmail || "";
@@ -706,7 +707,7 @@ function calculateExemption() {
   els.statusExplanation.innerText = explanationText;
   
   // Enable buttons if farm profile is filled out
-  const profileFilled = els.farmName.value.trim() !== "" && els.contactName.value.trim() !== "";
+  const profileFilled = els.farmName.value.trim() !== "" && els.contactName.value.trim() !== "" && state.farmState !== "";
   const helperHintEl = document.getElementById('print-helper-hint');
   
   if (profileFilled && status !== "") {
@@ -736,9 +737,10 @@ function calculateExemption() {
         helperHintEl.innerHTML = `
           <strong>⚠️ Required Action Items:</strong>
           <ul style="margin-left: 1.15rem; margin-top: 0.35rem; font-size: 0.78rem; display: flex; flex-direction: column; gap: 0.2rem; list-style-type: disc; line-height: 1.4;">
-            <li>Your farm is fully covered by the Produce Safety Rule.</li>
-            <li>You must implement the full standards for growing, harvesting, packing, and holding produce.</li>
-            <li>Attend a PSA Grower Training course to understand your regulatory obligations.</li>
+            <li>Your farm is fully covered by the Produce Safety Rule and must meet all applicable standards for growing, harvesting, packing, and holding produce.</li>
+            <li>Complete a <a href="https://cals.cornell.edu/produce-safety-alliance/training/grower-training-course/upcoming-grower-trainings" target="_blank" rel="noopener" style="color: inherit;">PSA Grower Training course</a> — the FDA-recognized national training that satisfies the supervisor training requirement in 21 CFR § 112.22(c).</li>
+            <li>Contact your state's produce safety program or cooperative extension office for on-farm compliance assistance and inspection guidance.</li>
+            <li>Review the <a href="https://www.fda.gov/food/food-safety-modernization-act-fsma/fsma-produce-safety-rule" target="_blank" rel="noopener" style="color: inherit;">FDA FSMA Produce Safety Rule</a> guidance for a full overview of your obligations.</li>
           </ul>
         `;
       }
@@ -751,7 +753,7 @@ function calculateExemption() {
       if (status === "") {
         helperHintEl.innerHTML = "⚠️ Please enter your sales data in Step 2 to calculate your status.";
       } else {
-        helperHintEl.innerHTML = "⚠️ Fill in <strong>Farm Legal Name</strong> and <strong>Owner/Operator Name</strong> in Step 1 to enable printing.";
+        helperHintEl.innerHTML = "⚠️ Fill in <strong>Farm Legal Name</strong>, <strong>Owner/Operator Name</strong>, and <strong>Farm State</strong> in Step 1 to enable printing.";
       }
       helperHintEl.classList.remove('hidden');
     }
