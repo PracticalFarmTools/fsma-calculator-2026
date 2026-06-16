@@ -341,16 +341,17 @@ async function loadThresholds() {
     const res = await fetch('thresholds.json');
     if (res.ok) {
       activeThresholds = await res.json();
-      els.syncBadge.innerText = `Updated ${activeThresholds.last_updated || 'recently'}`;
+      const yr = Object.keys(activeThresholds.assessment_years || {}).sort((a, b) => Number(b) - Number(a))[0] || '';
+      els.syncBadge.innerText = yr ? `FDA Limits: ${yr}` : 'FDA Limits Current';
     } else {
       console.warn('thresholds.json returned status', res.status, '- using offline fallback data.');
       activeThresholds = FALLBACK_THRESHOLDS;
-      els.syncBadge.innerText = `Offline Thresholds`;
+      els.syncBadge.innerText = 'Offline (2026 Limits)';
     }
   } catch (err) {
     console.warn('Could not fetch thresholds.json. Using offline fallback data.', err);
     activeThresholds = FALLBACK_THRESHOLDS;
-    els.syncBadge.innerText = `Offline Thresholds`;
+    els.syncBadge.innerText = 'Offline (2026 Limits)';
   }
 }
 

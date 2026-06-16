@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fsma-calculator-v14';
+const CACHE_NAME = 'fsma-calculator-v15';
 const NETWORK_TIMEOUT_MS = 4000;
 
 const ASSETS = [
@@ -27,7 +27,6 @@ const ASSETS = [
   './fonts/Outfit-800-latin.woff2',
   // Farmer walkthrough — available offline after first install
   './user-guide/index.html',
-  './user-guide/FSMA-Calculator-Walkthrough.pdf',
   './user-guide/images/guide-01-farm-info.png',
   './user-guide/images/guide-02-sales-records.png',
   './user-guide/images/guide-04-planner.png',
