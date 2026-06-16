@@ -4,3 +4,4 @@ update_thresholds.py
 README.md
 __pycache__/
 *.bak.json
+user-guide/walkthrough-print.html

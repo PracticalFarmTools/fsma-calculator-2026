@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FSMA Exemption Calculator — Farmer's Walkthrough</title>
+  <style>
+    @page {
+      size: letter;
+      margin: 0.65in 0.75in 0.8in;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      color: #2b2f2c;
+      line-height: 1.62;
+      font-size: 10.5pt;
+    }
+
+    /* ── Cover ─────────────────────────────────────────── */
+    .cover {
+      min-height: 9in;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      page-break-after: always;
+    }
+    .cover-logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 18px;
+      margin-bottom: 1.4rem;
+    }
+    .cover-brand {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10pt;
+      color: #5d665f;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+    .cover-rule {
+      width: 2in;
+      height: 3px;
+      background: #1b4322;
+      border-radius: 2px;
+      margin: 0 auto 1.5rem;
+    }
+    .cover h1 {
+      font-size: 26pt;
+      color: #1b4322;
+      line-height: 1.2;
+      margin-bottom: 0.75rem;
+    }
+    .cover-sub {
+      font-size: 13pt;
+      color: #5d665f;
+      max-width: 5in;
+      line-height: 1.45;
+      margin-bottom: 2.5rem;
+    }
+    .cover-url-box {
+      background: #eaf3ec;
+      border: 1.5px solid #2d6a3a;
+      border-radius: 8px;
+      padding: 0.55rem 1.5rem;
+      font-family: 'Courier New', monospace;
+      font-size: 11pt;
+      color: #1b4322;
+      letter-spacing: 0.02em;
+      margin-bottom: 2.5rem;
+    }
+    .cover-meta {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9.5pt;
+      color: #888;
+    }
+    .cover-badges {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: center;
+      margin-top: 0.6rem;
+      flex-wrap: wrap;
+    }
+    .cover-badge {
+      background: #1b4322;
+      color: #fff;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 8.5pt;
+      padding: 0.2rem 0.7rem;
+      border-radius: 20px;
+    }
+
+    /* ── Page break ─────────────────────────────────────── */
+    .page-break { page-break-before: always; }
+
+    /* ── Section headers ─────────────────────────────────── */
+    .page-header {
+      border-bottom: 2.5px solid #1b4322;
+      margin-bottom: 1rem;
+      padding-bottom: 0.3rem;
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+    .page-header h2 {
+      font-size: 15pt;
+      color: #1b4322;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      margin-top: 1.25rem;
+      margin-bottom: 0.55rem;
+    }
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #1b4322;
+      color: #fff;
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10pt;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+    .step-title {
+      font-size: 13.5pt;
+      color: #1b4322;
+      font-weight: bold;
+    }
+
+    h3 {
+      font-size: 11.5pt;
+      color: #2d6a3a;
+      margin: 0.9rem 0 0.3rem;
+    }
+
+    p { margin-bottom: 0.6rem; }
+    ul, ol { margin: 0.25rem 0 0.7rem 1.3rem; }
+    li { margin-bottom: 0.3rem; }
+    strong { color: #1b4322; }
+
+    /* ── Callout boxes ───────────────────────────────────── */
+    .callout {
+      background: #eaf3ec;
+      border-left: 4px solid #2d6a3a;
+      border-radius: 0 6px 6px 0;
+      padding: 0.6rem 0.85rem;
+      margin: 0.65rem 0;
+      font-size: 10pt;
+      break-inside: avoid;
+    }
+    .callout.amber {
+      background: #fdf6e8;
+      border-left-color: #d4a843;
+    }
+    .callout.alert {
+      background: #fef2f2;
+      border-left-color: #c0392b;
+    }
+
+    /* ── Tables ─────────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.65rem 0 0.9rem;
+      font-size: 10pt;
+      break-inside: avoid;
+    }
+    th {
+      background: #eaf3ec;
+      color: #1b4322;
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+      border: 1px solid #c8d9ca;
+    }
+    td {
+      padding: 0.4rem 0.6rem;
+      border: 1px solid #c8d9ca;
+      vertical-align: top;
+    }
+    tr:nth-child(even) td { background: #f7fbf8; }
+
+    /* ── Figures ─────────────────────────────────────────── */
+    figure {
+      margin: 0.75rem 0 0.9rem;
+      break-inside: avoid;
+    }
+    figure img {
+      width: 100%;
+      border: 1px solid #dde5de;
+      border-radius: 6px;
+      display: block;
+    }
+    figcaption {
+      font-size: 8.5pt;
+      color: #5d665f;
+      text-align: center;
+      margin-top: 0.25rem;
+      font-style: italic;
+    }
+
+    /* ── Horizontal rule ─────────────────────────────────── */
+    hr {
+      border: none;
+      border-top: 1px solid #dde5de;
+      margin: 1.1rem 0;
+    }
+
+    /* ── Resource links box ──────────────────────────────── */
+    .resource-box {
+      background: #f3f8f4;
+      border: 1px solid #c8d9ca;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      margin: 0.75rem 0;
+      break-inside: avoid;
+    }
+    .resource-box h3 {
+      margin-top: 0;
+      margin-bottom: 0.4rem;
+    }
+    .resource-url {
+      font-family: 'Courier New', monospace;
+      font-size: 9pt;
+      color: #1b4322;
+      word-break: break-all;
+    }
+
+    /* ── Threshold quick-ref ─────────────────────────────── */
+    .threshold-box {
+      display: flex;
+      gap: 0.75rem;
+      margin: 0.65rem 0 0.9rem;
+      break-inside: avoid;
+    }
+    .threshold-item {
+      flex: 1;
+      background: #1b4322;
+      color: #fff;
+      border-radius: 8px;
+      padding: 0.65rem 0.85rem;
+      text-align: center;
+    }
+    .threshold-label {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #cfe0d2;
+      margin-bottom: 0.2rem;
+    }
+    .threshold-value {
+      font-size: 16pt;
+      font-weight: bold;
+      line-height: 1;
+      margin-bottom: 0.15rem;
+    }
+    .threshold-note {
+      font-size: 8pt;
+      color: #cfe0d2;
+    }
+
+    /* ── Disclaimer ──────────────────────────────────────── */
+    .disclaimer {
+      font-size: 8.5pt;
+      color: #5d665f;
+      font-style: italic;
+      margin-top: 1.25rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #dde5de;
+      line-height: 1.5;
+    }
+
+    /* ── Running footer line ─────────────────────────────── */
+    .page-footer-line {
+      position: fixed;
+      bottom: 0.3in;
+      left: 0.75in;
+      right: 0.75in;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 7.5pt;
+      color: #aaa;
+      border-top: 1px solid #e0e0e0;
+      padding-top: 0.15rem;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════
+     COVER PAGE
+════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <img src="../icon-192.png" alt="Practical Farm Tools logo" class="cover-logo">
+  <div class="cover-brand">Practical Farm Tools</div>
+  <div class="cover-rule"></div>
+  <h1>FSMA Exemption Calculator</h1>
+  <p class="cover-sub">A Farmer's Walkthrough — Determine your FDA Produce Safety Rule exemption status and generate the signed record that proves it.</p>
+  <div class="cover-url-box">fsma-calculator-2026.vercel.app</div>
+  <div class="cover-meta">
+    2026 Season &nbsp;·&nbsp; FDA Thresholds Current &nbsp;·&nbsp; Free &amp; Offline-Capable
+    <div class="cover-badges" style="margin-top: 0.7rem;">
+      <span class="cover-badge">21 CFR Part 112</span>
+      <span class="cover-badge">No Account Required</span>
+      <span class="cover-badge">Works Without Internet</span>
+      <span class="cover-badge">Data Stays on Your Device</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 2 — WHY THIS EXISTS + WHAT YOU'LL NEED
+════════════════════════════════════════════════════════ -->
+<div class="page-header">
+  <h2>Why This Tool Exists</h2>
+</div>
+
+<p>If you grow and sell produce, the FDA's Food Safety Modernization Act (FSMA) Produce Safety Rule applies to you — unless your farm is small enough or local enough to qualify for an exemption. Most small farms <em>do</em> qualify. The challenge is that the exemption isn't paperwork-free: the dollar thresholds adjust for inflation every year, the math uses a three-year rolling average, and if you claim a Qualified Exemption you are required by federal regulation to keep a written record showing you checked your eligibility annually (21 CFR § 112.7).</p>
+
+<p>This calculator handles all of that. You enter three years of sales figures, it computes your status using the FDA's current thresholds, and it generates a citation-backed, signed record you can file and hand to an inspector. The whole process takes about ten minutes.</p>
+
+<div class="callout">
+  <strong>Before You Start — have these figures on hand:</strong>
+  <ul style="margin-top: 0.3rem;">
+    <li>Gross produce sales for the past three years (your Schedule F, sales ledger, or farm tax records)</li>
+    <li>Total food sales for the same three years</li>
+    <li>Sales made directly to consumers or to local restaurants/stores in-state or within 275 miles</li>
+  </ul>
+  Estimates give you a preview; exact figures make your printed record solid.
+</div>
+
+<hr>
+
+<h3>The Three Possible Results</h3>
+
+<div class="threshold-box">
+  <div class="threshold-item" style="background: #2d6a3a;">
+    <div class="threshold-label">Fully Exempt</div>
+    <div class="threshold-value" style="font-size: 12pt;">§ 112.4(a)</div>
+    <div class="threshold-note">Avg produce sales ≤ $34,324</div>
+  </div>
+  <div class="threshold-item" style="background: #7a6020;">
+    <div class="threshold-label">Qualified Exemption</div>
+    <div class="threshold-value" style="font-size: 12pt;">§ 112.5</div>
+    <div class="threshold-note">Avg food &lt; $686,476 &amp; majority local</div>
+  </div>
+  <div class="threshold-item" style="background: #8b2220;">
+    <div class="threshold-label">Not Exempt</div>
+    <div class="threshold-value" style="font-size: 12pt;">Part 112</div>
+    <div class="threshold-note">Fully covered by the rule</div>
+  </div>
+</div>
+
+<table>
+  <tr>
+    <th style="width: 22%;">Status</th>
+    <th>What It Means</th>
+    <th style="width: 32%;">What You Need to Do</th>
+  </tr>
+  <tr>
+    <td><strong>Fully Exempt</strong></td>
+    <td>Your average produce sales are at or below the FDA threshold. The rule doesn't cover your farm.</td>
+    <td>Keep sales records on file; print and sign the app's record as documentation.</td>
+  </tr>
+  <tr>
+    <td><strong>Partially Exempt (Qualified)</strong></td>
+    <td>Your food sales are under the limit and most go to local buyers. You skip the general requirements but have two specific obligations.</td>
+    <td>Label your products with farm name and address; keep an annual written determination — which this app prints for you.</td>
+  </tr>
+  <tr>
+    <td><strong>Not Exempt</strong></td>
+    <td>Your farm is fully covered by the Produce Safety Rule. The app tells you exactly which threshold you crossed.</td>
+    <td>Implement full PSA rule standards; complete a PSA Grower Training course; contact your state produce safety program.</td>
+  </tr>
+</table>
+
+<p style="font-size: 9.5pt; color: #5d665f;">Thresholds shown are the 2026 FDA inflation-adjusted figures, derived from GDP Implicit Price Deflators using sales years 2023, 2024, and 2025.</p>
+
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 3 — STEPS 1 & 2
+════════════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<div class="page-header">
+  <h2>Using the Calculator</h2>
+</div>
+
+<div class="step-header">
+  <span class="step-num">1</span>
+  <span class="step-title">Tell It About Your Farm</span>
+</div>
+
+<p>Open the app and fill in your farm's legal name, physical address, owner name, and contact details. This information appears on your printed exemption record, so use the name on your tax filings.</p>
+<p>Everything you type is <strong>saved automatically on your own device</strong> — nothing is uploaded anywhere, there is no account to create, and no one else can see your numbers. If you close the app and return next week, your information is still there.</p>
+
+<figure>
+  <img src="images/guide-01-farm-info.png" alt="The Farm Information form with live exemption status panel showing Offline Ready badge and User Guide nav link">
+  <figcaption>Your exemption status updates live in the right-hand panel as you type.</figcaption>
+</figure>
+
+<div class="step-header">
+  <span class="step-num">2</span>
+  <span class="step-title">Enter Three Years of Sales</span>
+</div>
+
+<p>For each of the three years shown, enter three dollar amounts. The app explains exactly what counts in each column — right where you need it — but here is the short version:</p>
+
+<table>
+  <tr>
+    <th style="width: 28%;">Field</th>
+    <th>Include</th>
+    <th>Leave Out</th>
+  </tr>
+  <tr>
+    <td><strong>Gross Produce Sales</strong></td>
+    <td>Raw fruits, vegetables, herbs, sprouts, nuts, mushrooms</td>
+    <td>Hay, meat, dairy, grains, processed or value-added foods</td>
+  </tr>
+  <tr>
+    <td><strong>Total Food Sales</strong></td>
+    <td>Everything people or animals eat: produce, meat, dairy, eggs, grain, hay, livestock feed</td>
+    <td>Timber, wool, ornamental plants, non-food items</td>
+  </tr>
+  <tr>
+    <td><strong>Qualified End-User Sales</strong></td>
+    <td>Sales directly to consumers (farmstand, CSA, markets, online); sales to restaurants or stores in-state or within 275 miles</td>
+    <td>Wholesale to distributors, out-of-area buyers beyond 275 miles</td>
+  </tr>
+</table>
+
+<div class="callout amber">
+  <strong>New or partial-year farm?</strong> Enter <strong>0</strong> for a year you were in business but had no sales of that type. Leave a year <strong>blank</strong> only if your farm was not yet in business at all that year. The calculator adjusts the average accordingly — a zero counts in the denominator, a blank does not. This distinction matters for your final number.
+</div>
+
+<figure>
+  <img src="images/guide-02-sales-records.png" alt="The Sales Records table with three years of entries alongside the exemption criteria reference">
+  <figcaption>Each column explains what to include and exclude, right where you need it.</figcaption>
+</figure>
+
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 4 — STEP 3
+════════════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<div class="page-header">
+  <h2>Reading and Using Your Result</h2>
+</div>
+
+<div class="step-header">
+  <span class="step-num">3</span>
+  <span class="step-title">Read Your Result</span>
+</div>
+
+<p>As you type, the status panel on the right does the math the same way the FDA does — a three-year rolling average compared against the current inflation-adjusted thresholds — and shows you one of the three outcomes described on page 2. Each result includes a plain-language explanation of what it means and what to do next.</p>
+
+<p>The panel shows three key numbers:</p>
+<ul>
+  <li>Your <strong>produce sales rolling average</strong> vs. the $34,324 full-exemption limit</li>
+  <li>Your <strong>total food sales rolling average</strong> vs. the $686,476 qualified-exemption limit</li>
+  <li>The <strong>percentage of your food sales</strong> that went to qualified end-users (must exceed 50% to qualify)</li>
+</ul>
+
+<figure>
+  <img src="images/guide-07-status-qualified.png" alt="The status panel showing a Partially Exempt (Qualified Local Farm) result with rolling averages, action steps checklist">
+  <figcaption>A Qualified Exemption result. Your rolling averages are shown next to each FDA limit, and the panel tells you exactly what to do to secure your status.</figcaption>
+</figure>
+
+<div class="callout">
+  <strong>Borderline result?</strong> If your numbers land close to a threshold, re-check your inputs for accuracy. Estimates are fine for a preview, but if you are within a few thousand dollars of a cut-off, use your exact Schedule F figures. A farm sitting right at $34,324 in average produce sales is still fully exempt — the rule covers only farms <em>above</em> the threshold.
+</div>
+
+<hr>
+
+<div class="step-header">
+  <span class="step-num">4</span>
+  <span class="step-title">Print Your Record</span>
+</div>
+
+<p>Once your farm name and sales numbers are entered, the <strong>Preview Exemption Letter</strong> and <strong>Print / Save Exemption Record</strong> buttons unlock. The document it generates is a formal annual determination — not a generic printout — containing:</p>
+
+<ul>
+  <li>Your complete farm profile and contact information</li>
+  <li>Your three-year sales ledger with the rolling-average math shown line by line</li>
+  <li>The exact FDA dollar thresholds for the current claim year, with their source date</li>
+  <li>The specific federal regulations (CFR citations) that apply to your farm's status</li>
+  <li>A compliance declaration and signature block</li>
+</ul>
+
+<figure>
+  <img src="images/guide-05-letter-preview.png" alt="The exemption document preview showing the formal letter with farm profile, status banner, and sales ledger">
+  <figcaption>Preview the completed document on screen before printing.</figcaption>
+</figure>
+
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 5 — SIGNATURE + PLANNER
+════════════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<div class="page-header">
+  <h2>Signing, Filing, and Planning Ahead</h2>
+</div>
+
+<figure>
+  <img src="images/guide-06-letter-signature.png" alt="The lower half of the exemption document showing regulatory citations, compliance declaration, and signature lines">
+  <figcaption>Every record includes the exact regulatory citations and a compliance declaration ready for your signature.</figcaption>
+</figure>
+
+<p>Sign the document, date it, and file it alongside your three years of sales records. If an FDA or state inspector ever asks how you determined your exemption status, you hand them this document.</p>
+
+<div class="callout amber">
+  <strong>Tip:</strong> In your browser's print dialog, choose <strong>Save as PDF</strong> instead of a printer to create a digital copy. Keep both a paper copy in your farm office and the PDF with your digital farm records.
+</div>
+
+<div class="callout">
+  <strong>Retention requirement (21 CFR § 112.164):</strong> Keep your exemption record for as long as it is needed to support your status — and no less than two years from the date it was created.
+</div>
+
+<hr>
+
+<div class="step-header">
+  <span class="step-num">5</span>
+  <span class="step-title">Optional: Look Ahead to Next Year</span>
+</div>
+
+<p>The <strong>Future Year Exemption Planner</strong> (inside the app, marked optional) lets you enter what you expect to sell this year and projects next year's status using your existing records plus your estimate. It uses the same calculation engine as the official determination, so the projection is consistent with how the real number will be calculated.</p>
+
+<p>It is useful for deciding whether to expand a crop, take on a new wholesale account, or begin preparing for full coverage before you cross a threshold.</p>
+
+<figure>
+  <img src="images/guide-04-planner.png" alt="The Future Year Exemption Planner with projected sales entered and a Projected Exempt result">
+  <figcaption>Enter projected sales for the current year and see where next year is likely to land.</figcaption>
+</figure>
+
+<p style="font-size: 9.5pt; color: #5d665f;"><em>Note: The planner uses the current year's FDA thresholds as a baseline. The actual limits for next year will adjust slightly when FDA publishes updated figures each spring. The projection is a planning estimate, not a formal determination.</em></p>
+
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 6 — THINGS TO KNOW + NOT EXEMPT RESOURCES
+════════════════════════════════════════════════════════ -->
+<div class="page-break"></div>
+<div class="page-header">
+  <h2>Things Worth Knowing</h2>
+</div>
+
+<h3>It works without internet</h3>
+<p>Once you have opened the app once on a device, it works completely offline — in a barn, in a field, at a market with no signal. The <strong>FDA Limits: 2026</strong> badge in the header confirms the app has the correct year's thresholds loaded. Add the app to your phone's home screen (using "Add to Home Screen" in your browser) and it functions like a regular app.</p>
+
+<h3>The dollar limits stay current</h3>
+<p>The thresholds are pulled from the FDA's official inflation-adjusted figures and updated each spring. The badge in the header shows the data date so you always know which year's numbers you're working from. If you open the app offline, it uses the most recently cached thresholds — the same figures shown in the table on page 2.</p>
+
+<h3>Your data stays on your device</h3>
+<p>No sales figures are ever transmitted to a server. There is no account, no sign-up, and no one else has access to your numbers. The data lives in your browser's local storage on your own device. The "Clear saved data" button at the bottom of the app wipes it completely if you ever need to.</p>
+
+<h3>It is free</h3>
+<p>No trial, no subscription, no upsell. The tool is provided as a public service to help small farms understand and document their FSMA status.</p>
+
+<hr>
+
+<div class="page-header" style="margin-top: 1rem;">
+  <h2>If Your Farm Is Fully Covered</h2>
+</div>
+
+<p>If the calculator tells you that your farm does not qualify for either exemption, the Produce Safety Rule applies in full. This is not a penalty — it is a determination based on your sales volume and distribution patterns. The rule exists to establish food safety standards for farms of a certain size, and there is a clear path to compliance.</p>
+
+<div class="callout alert" style="background: #fff3cd; border-left-color: #d4a843;">
+  <strong>Your immediate next steps if you are fully covered:</strong>
+  <ol style="margin-top: 0.35rem;">
+    <li>Complete a <strong>PSA Grower Training course</strong> — this is the FDA-recognized national training that satisfies the supervisor training requirement in 21 CFR § 112.22(c). Courses are offered in person, remotely, and online across the country.</li>
+    <li>Contact your <strong>state produce safety program</strong> or cooperative extension office. They provide on-farm technical assistance and can walk you through what the rule requires for your specific operation.</li>
+    <li>Review the <strong>FDA's full guidance</strong> for covered farms on the FSMA Produce Safety Rule page.</li>
+  </ol>
+</div>
+
+<div class="resource-box">
+  <h3>PSA Grower Training — Find a Course Near You</h3>
+  <p style="margin-bottom: 0.25rem; font-size: 10pt;">The Produce Safety Alliance (Cornell University, in partnership with FDA and USDA) runs the official national grower training program.</p>
+  <div class="resource-url">cals.cornell.edu/produce-safety-alliance/training/grower-training-course/upcoming-grower-trainings</div>
+</div>
+
+<div class="resource-box">
+  <h3>FDA FSMA Produce Safety Rule — Official Guidance</h3>
+  <p style="margin-bottom: 0.25rem; font-size: 10pt;">Complete regulatory text, compliance resources, and information for covered farms.</p>
+  <div class="resource-url">fda.gov/food/food-safety-modernization-act-fsma/fsma-produce-safety-rule</div>
+</div>
+
+<div class="resource-box">
+  <h3>The Calculator</h3>
+  <p style="margin-bottom: 0.25rem; font-size: 10pt;">Run your numbers, generate your record, and access this walkthrough online.</p>
+  <div class="resource-url">fsma-calculator-2026.vercel.app</div>
+</div>
+
+<div class="disclaimer">
+  This walkthrough and the FSMA Exemption Calculator are provided to help farms understand and document their status under the FDA FSMA Produce Safety Rule (21 CFR Part 112). They are not legal advice and do not constitute an official FDA or state coverage determination. Farms with complex operations, mixed-use facilities, or sales figures close to a threshold should consult their state produce safety program or cooperative extension office. The operator is solely responsible for verifying their exemption status and maintaining the required supporting records. &nbsp;·&nbsp; Practical Farm Tools &nbsp;·&nbsp; fsma-calculator-2026.vercel.app
+</div>
+
+</body>
+</html>
