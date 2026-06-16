@@ -581,26 +581,11 @@ select:focus-visible,
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
-  text-align: left;
-}
-
-.walkthrough-links-title {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--primary-green);
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-.walkthrough-links-buttons {
-  display: flex;
-  gap: 0.65rem;
-  width: 100%;
 }
 
 .btn-walkthrough {
-  font-size: 0.78rem;
-  padding: 0.55rem 0.85rem;
+  font-size: 0.82rem;
+  padding: 0.65rem 1.2rem;
   text-decoration: none;
   font-weight: 600;
   background-color: var(--bg-sage-light);
@@ -610,23 +595,13 @@ select:focus-visible,
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
-  width: 50%;
+  gap: 0.35rem;
+  width: 100%;
 }
 
 .btn-walkthrough:hover {
   background-color: var(--border-color);
   color: var(--primary-green-dark);
-}
-
-@media (max-width: 480px) {
-  .walkthrough-links-buttons {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  .btn-walkthrough {
-    width: 100%;
-  }
 }
 
 .btn {
@@ -838,6 +813,11 @@ select:focus-visible,
   margin: 0 auto;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   font-family: var(--font-body);
+}
+
+/* Force the print letter to display inside the modal preview container */
+#modal-letter-content .print-only {
+  display: block !important;
 }
 
 .letter-border {
@@ -1408,6 +1388,11 @@ select:focus-visible,
 
 /* Print Stylesheet - Triggers during window.print() */
 @media print {
+  html, body {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
   @page {
     size: letter;
     margin: 0.5in;

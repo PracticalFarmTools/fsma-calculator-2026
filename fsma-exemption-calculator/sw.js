@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fsma-calculator-v13';
+const CACHE_NAME = 'fsma-calculator-v14';
 const NETWORK_TIMEOUT_MS = 4000;
 
 const ASSETS = [
