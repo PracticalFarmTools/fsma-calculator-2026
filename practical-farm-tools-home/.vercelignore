@@ -1,0 +1,3 @@
+# Exclude development and utility files from Vercel deploy bundle
+README.md
+*.md

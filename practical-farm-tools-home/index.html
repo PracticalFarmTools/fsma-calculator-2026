@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- SEO Meta Tags -->
+  <title>Practical Farm Tools — Software for Farmers and Growers</title>
+  <meta name="description" content="Practical, local-first software utilities for farmers. Tools that work in the field without a signal and keep your data on your device.">
+  <meta name="keywords" content="farm software, offline-first PWA, FSMA exemption calculator, pesticide logging, agriculture database, rural tech">
+  <meta name="author" content="Practical Farm Tools">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://practicalfarmtools.com/">
+  <meta property="og:title" content="Practical Farm Tools — Software for Farmers and Growers">
+  <meta property="og:description" content="Practical, local-first utilities for farmers. Tools that work in the field without a signal and keep your data on your device.">
+  <meta property="og:image" content="https://practicalfarmtools.com/og-image.png">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://practicalfarmtools.com/">
+  <meta property="twitter:title" content="Practical Farm Tools — Software for Farmers and Growers">
+  <meta property="twitter:description" content="Practical, local-first utilities for farmers. Tools that work in the field without a signal and keep your data on your device.">
+  <meta property="twitter:image" content="https://practicalfarmtools.com/og-image.png">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-content">
+      <div class="logo-area">
+        <!-- SVG Logo: Leaf + Sprout -->
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <!-- Ground line -->
+          <line x1="3" y1="18" x2="21" y2="18"/>
+          <!-- Stem -->
+          <line x1="12" y1="18" x2="12" y2="10"/>
+          <!-- Left leaf -->
+          <path d="M12 14 C12 14 8 13 7 9 C9 9 12 11 12 14Z"/>
+          <!-- Right leaf -->
+          <path d="M12 11 C12 11 16 10 17 6 C15 6 12 8 12 11Z"/>
+        </svg>
+        <h1>Practical Farm Tools</h1>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main>
+    
+    <!-- Hero Banner -->
+    <section class="hero" aria-labelledby="hero-title">
+      <span class="hero-tag">Built for Working Farms</span>
+      <h2 id="hero-title">Practical Software for Farmers and Growers</h2>
+      <p class="hero-sub">We build lightweight, local-first utilities that work in the field without a signal. Your data stays on your device. Where it makes sense, tools sync when you're connected — but a connection is never the price of admission.</p>
+    </section>
+
+    <!-- App Section -->
+    <section aria-labelledby="suite-title">
+      <h3 class="section-title" id="suite-title">
+        <!-- SVG Section Icon: Apps Grid -->
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: var(--primary-green-light)">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        Software Utilities
+      </h3>
+      
+      <div class="app-grid">
+        
+        <!--
+          ====================================================
+          PROMOTING A CARD FROM PENDING → ACTIVE
+          When an app launches, make these 4 changes to its card:
+            1. class="app-card pending"  →  class="app-card active"
+            2. <span class="badge pending">Coming Soon</span>
+                 →  <span class="badge active">Active</span>
+            3. Replace the disabled <button> with two <a> buttons:
+                 Primary:   <a href="https://SUBDOMAIN.practicalfarmtools.com" class="btn btn-primary">Open App ...</a>
+                 Secondary: <a href="https://SUBDOMAIN.practicalfarmtools.com/user-guide/" class="btn btn-secondary">Install on your device</a>
+            4. Expand the card <p> description to the full public-facing copy.
+          ====================================================
+        -->
+
+        <!-- App Card 1: FSMA Exemption Calculator (Active) -->
+        <article class="app-card active" id="card-fsma-calculator">
+          <div class="card-top">
+            <div class="card-header-row">
+              <div class="card-icon-container">
+                <!-- SVG Icon: Calculator + Checkmark -->
+                <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect>
+                  <line x1="9" y1="22" x2="9" y2="16"></line>
+                  <line x1="15" y1="22" x2="15" y2="16"></line>
+                  <line x1="9" y1="16" x2="15" y2="16"></line>
+                  <path d="M9 7h6"></path>
+                  <path d="M9 11h6"></path>
+                </svg>
+              </div>
+              <span class="badge active">Active</span>
+            </div>
+            <h3>FSMA Exemption Calculator</h3>
+            <p>Determine and document your FDA FSMA Produce Safety Rule exemption status (21 CFR Part 112). Computes rolling averages against annual inflation-adjusted thresholds and generates printable records for inspectors. Fully offline-compatible.</p>
+          </div>
+          <div class="card-action">
+            <a href="https://fsma.practicalfarmtools.com" class="btn btn-primary" id="btn-open-fsma">
+              Open Calculator
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </a>
+            <a href="https://fsma.practicalfarmtools.com/user-guide/" target="_blank" rel="noopener" class="btn btn-secondary" id="btn-install-fsma">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                <line x1="12" y1="18" x2="12" y2="18"></line>
+              </svg>
+              Install on your device
+            </a>
+          </div>
+        </article>
+
+        <!-- App Card 2: Pesticide Compliance Logger (Pending) -->
+        <article class="app-card pending" id="card-pesticide-logger">
+          <div class="card-top">
+            <div class="card-header-row">
+              <div class="card-icon-container">
+                <!-- SVG Icon: Clipboard + Database -->
+                <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                  <path d="M12 11h4"></path>
+                  <path d="M12 16h4"></path>
+                  <path d="M8 11h.01"></path>
+                  <path d="M8 16h.01"></path>
+                </svg>
+              </div>
+              <span class="badge pending">Coming Soon</span>
+            </div>
+            <h3>Pesticide Logger &amp; Database</h3>
+            <p>State-aware pesticide application records stored locally on your device. Syncs when connected — no signal required in the field.</p>
+          </div>
+          <div class="card-action">
+            <button class="btn btn-disabled" disabled aria-disabled="true">In Development</button>
+          </div>
+        </article>
+
+        <!-- App Card 3: Crop Traceability (Pending) -->
+        <article class="app-card pending" id="card-traceability">
+          <div class="card-top">
+            <div class="card-header-row">
+              <div class="card-icon-container">
+                <!-- SVG Icon: Tag + Box -->
+                <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                  <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+              </div>
+              <span class="badge pending">Coming Soon</span>
+            </div>
+            <h3>Harvest Traceability Hub</h3>
+            <p>Offline lot-code tracking and audit documentation for harvest and post-harvest operations.</p>
+          </div>
+          <div class="card-action">
+            <button class="btn btn-disabled" disabled aria-disabled="true">In Development</button>
+          </div>
+        </article>
+
+      </div>
+
+      <!-- New app cards: copy the template from README.md into the app-grid above. -->
+
+      <p class="suite-teaser">More tools in the works. Check back soon.</p>
+
+    </section>
+  </main>
+
+  <!-- App Footer -->
+  <footer class="app-footer">
+    <div class="footer-content">
+      <div class="footer-grid">
+        
+        <div class="footer-brand">
+          <h4>Practical Farm Tools</h4>
+          <p>We build practical, local-first utilities for farmers and growers. Tools that work in the field, keep your data on your device, and don't require a constant connection.</p>
+        </div>
+        
+
+        
+        <div class="footer-disclaimer">
+          <h5>Compliance Disclaimer</h5>
+          <p>All assessments and tools provided by Practical Farm Tools are self-assessment resources meant strictly for informational purposes. They do not constitute official legal or regulatory compliance determinations. Farmers are advised to verify exemption statuses and logging practices with the FDA, USDA, or local state departments of agriculture.</p>
+        </div>
+        
+      </div>
+      
+      <div class="footer-bottom">
+        <p>&copy; 2026 Practical Farm Tools. All rights reserved.</p>
+        <div class="footer-bottom-links">
+          <a href="https://fsma.practicalfarmtools.com/user-guide/" target="_blank" rel="noopener" id="footer-guide-link">Calculator User Guide</a>
+          <a href="mailto:practicalfarmtools@gmail.com" id="footer-contact-link">Contact</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

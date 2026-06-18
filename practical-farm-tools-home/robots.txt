@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://practicalfarmtools.com/sitemap.xml
