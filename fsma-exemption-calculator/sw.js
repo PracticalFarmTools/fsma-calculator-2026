@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fsma-calculator-v15';
+const CACHE_NAME = 'fsma-calculator-v16';
 const NETWORK_TIMEOUT_MS = 4000;
 
 const ASSETS = [
@@ -163,6 +163,9 @@ self.addEventListener('fetch', (e) => {
 
   const url = new URL(e.request.url);
   if (!isSameOrigin(url)) return;
+  // Vercel Web Analytics is injected at the edge. Leave it on the network so a
+  // slow or offline field visit does not cache or time out the insights script.
+  if (url.pathname.startsWith('/_vercel/')) return;
 
   if (isThresholds(url)) {
     e.respondWith(networkFirst(e.request));
